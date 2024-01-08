@@ -1,0 +1,21 @@
+name: 清除记录
+
+on:
+  schedule:
+    - cron: '0 20 * * *'
+  workflow_dispatch:
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: 检查代码仓库
+        uses: actions/checkout@v3
+      - 
+       name: 删除工作流
+       uses: GitRML/delete-workflow-runs@main
+       with:
+        token: ${{ secrets.c8 }}
+        retain_days: 2
+        keep_minimum_runs: 0
