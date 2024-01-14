@@ -31,7 +31,13 @@ jobs:
           - TARGET: arm7l-swrt
             OS: ubuntu-latest
             GCC: arm-linux-musleabi
+          - TARGET: arm7l-opt
+            OS: ubuntu-latest
+            GCC: arm-linux-musleabi
           - TARGET: mipsel
+            OS: ubuntu-latest
+            GCC: mipsel-buildroot-linux-uclibc
+          - TARGET: mipsel-opt
             OS: ubuntu-latest
             GCC: mipsel-buildroot-linux-uclibc
     runs-on: ${{ matrix.OS }}
@@ -46,7 +52,7 @@ jobs:
           echo -e "\n\033[42;31;5;1m 开始克隆源码... \n\033[0m"
           git clone https://github.com/zerotier/ZeroTierOne -b ${{ steps.getversion.outputs.ver }} /opt/zt
           mkdir -p /opt/musl_gcc 
-          if [[ $TARGET == mipsel ]] ; then
+          if [[ $TARGET == mipsel ]] || [[ $TARGET == mipsel-opt ]]; then
           echo -e "\n\033[42;31;5;1m 开始下载musl工具链.. \n\033[0m"
           wget -q -c https://github.com/lmq8267/vnt-cli/releases/download/Armada370-ToolChain/buildroot-2023.02.5-mipsel-uclibc.zip -P /opt/musl_gcc/
           echo -e "\n\033[42;31;5;1m 开始解压musl工具链.. \n\033[0m"
@@ -80,6 +86,14 @@ jobs:
           echo -e "\n\033[42;31;5;1m 修改mipsel架构密钥存储路径 \n\033[0m"
           sed -i 's|/var/lib/zerotier-one|/etc/storage/zerotier-one|g' ./osdep/OSUtils.cpp
           fi
+          if [[ $TARGET == mipsel-opt ]] ; then
+          echo -e "\n\033[42;31;5;1m 修改mipsel架构Entware密钥存储路径 \n\033[0m"
+          sed -i 's|/var/lib/zerotier-one|/opt/var/lib/zerotier-one|g' ./osdep/OSUtils.cpp
+          fi
+          if [[ $TARGET == arm7l-opt ]] ; then
+          echo -e "\n\033[42;31;5;1m 修改arm7l架构Entware密钥存储路径 \n\033[0m"
+          sed -i 's|/var/lib/zerotier-one|/opt/var/lib/zerotier-one|g' ./osdep/OSUtils.cpp
+          fi
           if [[ $TARGET == arm7l-koolshare ]] ; then
           echo -e "\n\033[42;31;5;1m 修改arm7l架构koolshare密钥存储路径 \n\033[0m"
           sed -i 's|/var/lib/zerotier-one|/koolshare/configs/zerotier-one|g' ./osdep/OSUtils.cpp
@@ -99,7 +113,7 @@ jobs:
           
           echo -e "\n\033[42;31;5;1m 设置编译环境变量 \n\033[0m"
           sudo timedatectl set-timezone "Asia/Shanghai"
-          if [[ $TARGET == mipsel ]] ; then
+          if [[ $TARGET == mipsel ]] || [[ $TARGET == mipsel-opt ]] ; then
           export PATH=$PATH:/opt/musl_gcc/host/bin
           export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/musl_gcc/host/lib
           export CC=mipsel-buildroot-linux-uclibc-gcc
@@ -144,7 +158,7 @@ jobs:
           echo -e "\n\033[42;31;5;1m 查看原始体积 \n\033[0m"
           du -k zerotier-one
           echo -e "\n\033[42;31;5;1m 开始剥离... \n\033[0m"
-          if [[ $TARGET == mipsel ]] ; then
+          if [[ $TARGET == mipsel ]] || [[ $TARGET == mipsel-opt ]] ; then
           /opt/musl_gcc/host/bin/mipsel-buildroot-linux-uclibc-strip zerotier-one
           else
           /opt/musl_gcc/${{ env.MUSL_URI }}/bin/${{ matrix.GCC }}-strip zerotier-one
@@ -204,6 +218,34 @@ jobs:
             cd /opt/ipk
             tar czvf data.tar.gz opt
             tar -czf zerotier_${{ needs.check.outputs.ver }}-1_mipsel-3.4.ipk data.tar.gz control.tar.gz debian-binary
+         fi
+         if [[ $TARGET == mipsel-opt ]] ;then
+         mkdir -p /opt/bin/zerotier-one
+         echo -e "\n\033[42;31;5;1m 打包mipsel-opt-zerotier \n\033[0m"
+         cp /opt/zt/zerotier-one /opt/bin/zerotier-one/zerotier-one
+         ln -sf /opt/bin/zerotier-one/zerotier-one /opt/bin/zerotier-one/zerotier-cli
+         ln -sf /opt/bin/zerotier-one/zerotier-one /opt/bin/zerotier-one/zerotier-idtool
+         cd /opt/bin
+         tar czvf zerotier-mipsel-opt.tar.gz zerotier-one
+         mkdir -p /opt/ipk
+            wget -q -c https://github.com/lmq8267/ZeroTierOne/releases/download/1.12.2/zerotier_1.12.2-1_mipsel-3.4.ipk -P /opt/ipk/
+            echo -e "\n\033[42;31;5;1m 开始打包Entware软件中心IPK安装包.. \n\033[0m"
+            tar xzf /opt/ipk/zerotier_1.12.2-1_mipsel-3.4.ipk -C /opt/ipk/
+            tar -xf /opt/ipk/data.tar.gz -C /opt/ipk/
+            rm -rf /opt/ipk/opt/bin/zerotier-one /opt/ipk/data.tar.gz
+            cp -rf /opt/bin/zerotier-one/zerotier-one /opt/ipk/opt/bin/zerotier-one
+            cd /opt/ipk
+            tar czvf data.tar.gz opt
+            tar -czf zerotier-opt_${{ needs.check.outputs.ver }}-1_mipsel-3.4.ipk data.tar.gz control.tar.gz debian-binary
+          fi 
+         if [[ $TARGET == arm7l-opt ]] ;then
+         mkdir -p /opt/bin/zerotier-one
+         echo -e "\n\033[42;31;5;1m 打包arm7l-opt-zerotier \n\033[0m"
+         cp /opt/zt/zerotier-one /opt/bin/zerotier-one/zerotier-one
+         ln -sf /opt/bin/zerotier-one/zerotier-one /opt/bin/zerotier-one/zerotier-cli
+         ln -sf /opt/bin/zerotier-one/zerotier-one /opt/bin/zerotier-one/zerotier-idtool
+         cd /opt/bin
+         tar czvf zerotier-arm7l-opt.tar.gz zerotier-one
          fi
       - 
         name: 打包梅林离线安装包
@@ -273,11 +315,20 @@ jobs:
            > ### 编译时间：${{ env.build_time }}
            - **密钥存储位置已改为：/etc/storage/zerotier-one**
            - **这是适用于mipsel架构的二进制文件**
+           
+           - zerotier-arm7l-opt.tar.gz   arm7l架构密钥路径/opt/var/lib/zerotier-one
+           - zerotier-mipsel-opt.tar.gz   mipsel架构密钥路径/opt/var/lib/zerotier-one
+           - zerotier_${{ needs.check.outputs.ver }}-1_mipsel-3.4.ipk   Entware软件包密钥路径/etc/storage/zerotier-one
+           - zerotier-opt_${{ needs.check.outputs.ver }}-1_mipsel-3.4.ipk   Entware软件包密钥路径/opt/var/lib/zerotier-one
 
+           
            **[官方更新说明](https://github.com/zerotier/ZeroTierOne/releases)**
           tag_name: ${{ steps.getversion.outputs.ver }}
           files: |
             /opt/bin/zerotier.tar.gz
+            /opt/bin/zerotier-arm7l-opt.tar.gz
+            /opt/ipk/zerotier-opt_${{ needs.check.outputs.ver }}-1_mipsel-3.4.ipk
+            /opt/bin/zerotier-mipsel-opt.tar.gz
             /opt/bin/tarMD5.txt
             /opt/bin/zerotier-one/zerotier-one
             /opt/bin/zerotier-one/MD5.txt
