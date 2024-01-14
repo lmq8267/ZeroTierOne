@@ -75,6 +75,8 @@ jobs:
         shell: bash
         run: |
           cd /opt/zt
+          sudo apt install qemu-user
+          sudo apt install qemu-mipsel-static
           echo -e "\n\033[42;31;5;1m 修改zerotier源码 \n\033[0m"
           sed -i 's|-fPIC -fPIE|-fPIC -fPIE -static|g' ./make-linux.mk
           sed -i '/include objects.mk/i    LDLIBS+=-latomic' ./make-linux.mk
@@ -103,8 +105,9 @@ jobs:
           sed -i 's|/var/lib/zerotier-one|/jffs/softcenter/etc/zerotier-one|g' ./osdep/OSUtils.cpp
           fi
           cat ./osdep/OSUtils.cpp | grep /zerotier-one
+          if [ $(cat ./osdep/LinuxEthernetTap.cpp | grep -c "ioctl(sock,SIOCSIFHWADDR,(void") -eq 2 ]; then
           MAC="$(grep -n "ioctl(sock,SIOCSIFHWADDR,(void" ./osdep/LinuxEthernetTap.cpp | head -2 | tail -1 | awk '{print $1}' | tr -d ": ")" && echo -e "\n\033[42;31;5;1m 删除第 ${MAC} 行 \n\033[0m" &&  sed -i "$((MAC)),+5d" ./osdep/LinuxEthernetTap.cpp && cat ./osdep/LinuxEthernetTap.cpp | grep MAC
-          
+          fi
           #sed -i 's|fprintf(stderr, "Error binding control plane to 0.0.0.0:%d\n", _primaryPort);|char command[1024];\n sprintf(command, "logger -t '\''【ZeroTier】'\'' '\''Error IPV4 binding control plane to 0.0.0.0:%d'\'' ", _primaryPort);\n system(command);|g' ./service/OneService.cpp
           #sed -i 's|fprintf(stderr, "Error binding control plane to [::]:%d\n", _primaryPort);|char command[1024];\n sprintf(command, "logger -t '\''【ZeroTier】'\'' '\''Error IPV6 binding control plane to [::]:%d'\'' ", _primaryPort);\n system(command);|g' ./service/OneService.cpp
           #sed -i 's|fprintf(stderr, "ERROR: Could not bind control plane. Exiting...\n");|char command[1024];\n sprintf(command, "logger -t '\''【ZeroTier】'\'' '\''ERROR: IPV4和IPV6 Could not bind control plane. Exiting...'\'' ", _primaryPort);\n system(command);|g' ./service/OneService.cpp
@@ -153,6 +156,13 @@ jobs:
           chmod 777 /opt/upx-4.1.0-amd64_linux/upx
           cd /opt/zt
           echo -e "\n\033[42;31;5;1m 查看二进制程序信息 \n\033[0m"
+          if [[ $TARGET == mipsel ]] || [[ $TARGET == mipsel-opt ]] ; then
+          qemu-mipsel-static zerotier-one -h
+          qemu-mipsel-static zerotier-one -v
+          else
+          qemu-arm zerotier-one -h
+          qemu-arm zerotier-one -v
+          fi
           file zerotier-one
           strings zerotier-one | grep /zerotier-one
           echo -e "\n\033[42;31;5;1m 查看原始体积 \n\033[0m"
