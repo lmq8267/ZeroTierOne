@@ -103,7 +103,7 @@ jobs:
           sed -i 's|/var/lib/zerotier-one|/jffs/softcenter/etc/zerotier-one|g' ./osdep/OSUtils.cpp
           fi
           cat ./osdep/OSUtils.cpp | grep /zerotier-one
-          MAC="$(grep -n "ioctl(sock,SIOCSIFHWADDR,(void" ./osdep/LinuxEthernetTap.cpp | head -2 | tail -1 | awk '{print $1}' | tr -d ": ")" && echo -e "\n\033[42;31;5;1m 删除第 ${t} 行 \n\033[0m" &&  sed -i "$((MAC)),+5d" ./osdep/LinuxEthernetTap.cpp && cat ./osdep/LinuxEthernetTap.cpp | grep MAC
+          MAC="$(grep -n "ioctl(sock,SIOCSIFHWADDR,(void" ./osdep/LinuxEthernetTap.cpp | head -2 | tail -1 | awk '{print $1}' | tr -d ": ")" && echo -e "\n\033[42;31;5;1m 删除第 ${MAC} 行 \n\033[0m" &&  sed -i "$((MAC)),+5d" ./osdep/LinuxEthernetTap.cpp && cat ./osdep/LinuxEthernetTap.cpp | grep MAC
           
           #sed -i 's|fprintf(stderr, "Error binding control plane to 0.0.0.0:%d\n", _primaryPort);|char command[1024];\n sprintf(command, "logger -t '\''【ZeroTier】'\'' '\''Error IPV4 binding control plane to 0.0.0.0:%d'\'' ", _primaryPort);\n system(command);|g' ./service/OneService.cpp
           #sed -i 's|fprintf(stderr, "Error binding control plane to [::]:%d\n", _primaryPort);|char command[1024];\n sprintf(command, "logger -t '\''【ZeroTier】'\'' '\''Error IPV6 binding control plane to [::]:%d'\'' ", _primaryPort);\n system(command);|g' ./service/OneService.cpp
