@@ -33,10 +33,7 @@ jobs:
             GCC: arm-linux-musleabi
           - TARGET: mipsel
             OS: ubuntu-latest
-            GCC: mipsel-linux-musl
-          - TARGET: mips
-            OS: ubuntu-latest
-            GCC: mips-linux-musl
+            GCC: mipsel-buildroot-linux-uclibc
     runs-on: ${{ matrix.OS }}
     env:
       TARGET: ${{ matrix.TARGET }}
@@ -48,28 +45,25 @@ jobs:
         run: |
           echo -e "\n\033[42;31;5;1m 开始克隆源码... \n\033[0m"
           git clone https://github.com/zerotier/ZeroTierOne -b ${{ steps.getversion.outputs.ver }} /opt/zt
-          case $TARGET in 
-              mipsel)
-                MUSL_URI=mipsel-linux-musl-cross
-                ;;
-              arm7l-koolshare)
-                MUSL_URI=arm-linux-musleabi-cross
-                ;;
-              arm7l-swrt)
-                MUSL_URI=arm-linux-musleabi-cross
-                ;;
-              mips)
-                MUSL_URI=mips-linux-musl-cross
-                ;;
-            esac
-          echo "MUSL_URI=${MUSL_URI}" >> $GITHUB_ENV
           mkdir -p /opt/musl_gcc 
+          if [[ $TARGET == mipsel ]] ; then
+          echo -e "\n\033[42;31;5;1m 开始下载musl工具链.. \n\033[0m"
+          wget -q -c https://github.com/lmq8267/vnt-cli/releases/download/Armada370-ToolChain/buildroot-2023.02.5-mipsel-uclibc.zip -P /opt/musl_gcc/
+          echo -e "\n\033[42;31;5;1m 开始解压musl工具链.. \n\033[0m"
+          unzip -q  /opt/musl_gcc/buildroot-2023.02.5-mipsel-uclibc.zip -d /opt/musl_gcc/
+          echo -e "\n\033[42;31;5;1m 查看musl-gcc信息 \n\033[0m"
+          sudo chmod -R +x /opt/musl_gcc 
+          /opt/musl_gcc/host/bin/mipsel-buildroot-linux-uclibc-gcc -v
+          else
+          MUSL_URI=arm-linux-musleabi-cross
+          echo "MUSL_URI=${MUSL_URI}" >> $GITHUB_ENV
           echo -e "\n\033[42;31;5;1m 开始下载musl工具链.. \n\033[0m"
           wget -q -c https://musl.cc/$MUSL_URI.tgz -P /opt/musl_gcc/
           echo -e "\n\033[42;31;5;1m 开始解压musl工具链.. \n\033[0m"
           tar -xf /opt/musl_gcc/$MUSL_URI.tgz -C /opt/musl_gcc/
           echo -e "\n\033[42;31;5;1m 查看musl-gcc信息 \n\033[0m"
           /opt/musl_gcc/$MUSL_URI/bin/${{ matrix.GCC }}-gcc -v
+          fi
       - 
         name: 编译zerotier
         shell: bash
@@ -82,10 +76,6 @@ jobs:
           sed -i 's|override CXXFLAGS+=-march=armv5t -mfloat-abi=soft -msoft-float -mno-unaligned-access -marm|override CXXFLAGS+=-mfloat-abi=soft -msoft-float -mno-unaligned-access -marm|g' ./make-linux.mk
           sed -i 's|override CFLAGS+=-mfloat-abi=hard -march=armv6zk -marm -mfpu=vfp -mno-unaligned-access -mtp=cp15 -mcpu=arm1176jzf-s|override CFLAGS+=-mfloat-abi=soft -msoft-float -mno-unaligned-access -marm|g' ./make-linux.mk
           sed -i 's|override CXXFLAGS+=-mfloat-abi=hard -march=armv6zk -marm -mfpu=vfp -fexceptions -mno-unaligned-access -mtp=cp15 -mcpu=arm1176jzf-s|override CXXFLAGS+=-mfloat-abi=soft -msoft-float -mno-unaligned-access -marm|g' ./make-linux.mk
-          if [[ $TARGET == mips ]] ; then
-          echo -e "\n\033[42;31;5;1m 修改mips架构密钥存储路径 \n\033[0m"
-          sed -i 's|/var/lib/zerotier-one|/etc/storage/zerotier-one|g' ./osdep/OSUtils.cpp
-          fi
           if [[ $TARGET == mipsel ]] ; then
           echo -e "\n\033[42;31;5;1m 修改mipsel架构密钥存储路径 \n\033[0m"
           sed -i 's|/var/lib/zerotier-one|/etc/storage/zerotier-one|g' ./osdep/OSUtils.cpp
@@ -109,6 +99,17 @@ jobs:
           
           echo -e "\n\033[42;31;5;1m 设置编译环境变量 \n\033[0m"
           sudo timedatectl set-timezone "Asia/Shanghai"
+          if [[ $TARGET == mipsel ]] ; then
+          export PATH=$PATH:/opt/musl_gcc/host/bin
+          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/musl_gcc/host/lib
+          export CC=mipsel-buildroot-linux-uclibc-gcc
+          export CXX=mipsel-buildroot-linux-uclibc-g++
+          export AR=mipsel-buildroot-linux-uclibc-ar
+          export LD=mipsel-buildroot-linux-uclibc-ld
+          export RANLIB=mipsel-buildroot-linux-uclibc-ranlib
+          export STRIP=mipsel-buildroot-linux-uclibc-strip
+          export CFLAGS="-I /opt/musl_gcc/host/include -L /opt/musl_gcc/host/lib -Wl,--gc-sections -Os -ffunction-sections -fdata-sections -D_GNU_SOURCE -D_BSD_SOURCE -fPIE"
+          else
           export PATH=$PATH:/opt/musl_gcc/${{ env.MUSL_URI }}/bin
           export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/musl_gcc/${{ env.MUSL_URI }}/${{ matrix.GCC }}/lib
           export CC=${{ matrix.GCC }}-gcc
@@ -118,6 +119,7 @@ jobs:
           export RANLIB=${{ matrix.GCC }}-ranlib
           export STRIP=${{ matrix.GCC }}-strip
           export CFLAGS="-I /opt/musl_gcc/${{ env.MUSL_URI }}/${{ matrix.GCC }}/include -L /opt/musl_gcc/${{ env.MUSL_URI }}/${{ matrix.GCC }}/lib -Wl,--gc-sections -Os -ffunction-sections -fdata-sections -D_GNU_SOURCE -D_BSD_SOURCE -fPIE"
+          fi
           export CXXFLAGS="$CFLAGS"
           export TARGET_CFLAGS=" -DNDEBUG -DBOOST_NO_FENV_H -DBOOST_DISABLE_ASSERTS"
           echo -e "\n\033[42;31;5;1m 开始编译... \n\033[0m"
@@ -142,7 +144,11 @@ jobs:
           echo -e "\n\033[42;31;5;1m 查看原始体积 \n\033[0m"
           du -k zerotier-one
           echo -e "\n\033[42;31;5;1m 开始剥离... \n\033[0m"
+          if [[ $TARGET == mipsel ]] ; then
+          /opt/musl_gcc/host/bin/mipsel-buildroot-linux-uclibc-strip zerotier-one
+          else
           /opt/musl_gcc/${{ env.MUSL_URI }}/bin/${{ matrix.GCC }}-strip zerotier-one
+          fi
           echo -e "\n\033[42;31;5;1m 查看剥离后的体积 \n\033[0m"
           du -k zerotier-one
           echo -e "\n\033[42;31;5;1m 开始upx压缩... \n\033[0m"
@@ -159,18 +165,14 @@ jobs:
         name: 打包上传
         shell: bash
         run: |
-         if [[ $TARGET == mips ]] || [[ $TARGET == mipsel ]] ; then
+         if [[ $TARGET == mipsel ]] ; then
          mkdir -p /opt/bin/zerotier-one
          echo -e "\n\033[42;31;5;1m 打包padavan的zerotier \n\033[0m"
          cp /opt/zt/zerotier-one /opt/bin/zerotier-one/zerotier-one
          ln -sf /opt/bin/zerotier-one/zerotier-one /opt/bin/zerotier-one/zerotier-cli
          ln -sf /opt/bin/zerotier-one/zerotier-one /opt/bin/zerotier-one/zerotier-idtool
          cd /opt/bin
-         if [[ $TARGET == mips ]] ; then
-         tar czvf zerotier-mips.tar.gz zerotier-one
-         else
          tar czvf zerotier.tar.gz zerotier-one
-         fi
             if [[ $TARGET == mipsel ]] ; then
             echo $(md5sum /opt/bin/zerotier.tar.gz | awk '{print $1;}') >tarMD5.txt
             cd /opt/bin/zerotier-one
@@ -271,12 +273,10 @@ jobs:
            > ### 编译时间：${{ env.build_time }}
            - **密钥存储位置已改为：/etc/storage/zerotier-one**
            - **这是适用于mipsel架构的二进制文件**
-           - **zerotier-mips.tar.gz为mips架构的二进制文件**
 
            **[官方更新说明](https://github.com/zerotier/ZeroTierOne/releases)**
           tag_name: ${{ steps.getversion.outputs.ver }}
           files: |
-            /opt/bin/zerotier-mips.tar.gz
             /opt/bin/zerotier.tar.gz
             /opt/bin/tarMD5.txt
             /opt/bin/zerotier-one/zerotier-one
