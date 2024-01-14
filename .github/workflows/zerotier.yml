@@ -313,16 +313,16 @@ jobs:
           token: ${{ secrets.c8 }}
           body: |
            > ### 编译时间：${{ env.build_time }}
-           - **文件说明：**
+           **文件说明：**
 
-           - zerotier.tar.gz    mipsel架构padavan固件压缩包 密钥路径/etc/storage/zerotier-one
-           - tarMD5.txt 为zerotier.tar.gz压缩包的MD5校验值
-           - zerotier-one  mipsel架构padavan固件单独二进制文件 密钥路径/etc/storage/zerotier-one
-           - MD5.txt  为zerotier-one单独二进制文件的MD5校验值
-           - zerotier-arm7l-opt.tar.gz   arm7l架构密钥路径/opt/var/lib/zerotier-one
-           - zerotier-mipsel-opt.tar.gz   mipsel架构密钥路径/opt/var/lib/zerotier-one
-           - zerotier_${{ needs.check.outputs.ver }}-1_mipsel-3.4.ipk   Entware软件包密钥路径/etc/storage/zerotier-one
-           - zerotier-opt_${{ needs.check.outputs.ver }}-1_mipsel-3.4.ipk   Entware软件包密钥路径/opt/var/lib/zerotier-one
+           - **zerotier.tar.gz**    mipsel架构padavan固件压缩包 密钥路径 **/etc/storage/zerotier-one**
+           - **tarMD5.txt** 为 **zerotier.tar.gz** 压缩包的MD5校验值
+           - **zerotier-one**  mipsel架构padavan固件单独二进制文件 密钥路径 **/etc/storage/zerotier-one**
+           - **MD5.txt**  为 **zerotier-one** 单独二进制文件的MD5校验值
+           - **zerotier-arm7l-opt.tar.gz**   arm7l架构密钥路径 **/opt/var/lib/zerotier-one**
+           - **zerotier-mipsel-opt.tar.gz**   mipsel架构密钥路径 **/opt/var/lib/zerotier-one**
+           - **zerotier_${{ needs.check.outputs.ver }}-1_mipsel-3.4.ipk**   Entware软件包密钥路径 **/etc/storage/zerotier-one**
+           - **zerotier-opt_${{ needs.check.outputs.ver }}-1_mipsel-3.4.ipk**   Entware软件包密钥路径 **/opt/var/lib/zerotier-one**
 
            **arm7l架构[koolshare](https://github.com/lmq8267/ZeroTierOne/releases/tag/koolshare)的梅林固件384/386软件中心的离线安装包**
            **arm7l架构[P大的swrt](https://github.com/lmq8267/ZeroTierOne/releases/tag/swrt)的梅林固件384/386软件中心的离线安装包**
