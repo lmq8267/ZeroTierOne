@@ -168,27 +168,27 @@ if [ ! -s "$SVC_PATH" ] ; then
        rm -rf /etc/storage/zerotier-one/MD5.txt
        if [ ! -z "$tag" ] ; then
            logger -t "【ZeroTier】" "获取到最新版本zerotier_v$tag,开始下载"
-           wgetcurl.sh "/etc/storage/zerotier-one/MD5.txt" "https://github.com/lmq8267/ZeroTierOne/releases/download/$tag/MD5.txt" "https://fastly.jsdelivr.net/gh/lmq8267/zerotier@master/install/$tag/tarMD5.txt"
+           wgetcurl.sh "/etc/storage/zerotier-one/MD5.txt" "https://github.com/lmq8267/ZeroTierOne/releases/download/$tag/MD5.txt" "https://hub.gitmirror.com/https://github.com/lmq8267/ZeroTierOne/releases/download/$tag/MD5.txt"
            if [ "$zerosize" -lt 2 ];then
                logger -t "【ZeroTier】" "您的设备/etc/storage空间剩余"$zerosize"M，不足2M，将下载安装包到内存安装"
                [ "$zerosize" -gt 1 ] && logger -t "【ZeroTier】" "可尝试手动上传zerotier.tar.gz和MD5.txt到内部存储/etc/storage/zerotier-one/目录里"
-               wgetcurl.sh "$SVC_PATH2" "https://github.com/lmq8267/ZeroTierOne/releases/download/$tag/zerotier.tar.gz" "https://fastly.jsdelivr.net/gh/lmq8267/zerotier@master/install/$tag/zerotier.tar.gz"
+               wgetcurl.sh "$SVC_PATH2" "https://github.com/lmq8267/ZeroTierOne/releases/download/$tag/zerotier.tar.gz" "https://hub.gitmirror.com/https://github.com/lmq8267/ZeroTierOne/releases/download/$tag/zerotier.tar.gz"
                else
                 logger -t "【ZeroTier】" "您的设备/etc/storage空间充足:"$zerosize"M，将下载安装包到内部存储"
-                wgetcurl.sh "/etc/storage/zerotier-one/zerotier.tar.gz" "https://github.com/lmq8267/ZeroTierOne/releases/download/$tag/zerotier.tar.gz" "https://fastly.jsdelivr.net/gh/lmq8267/zerotier@master/install/$tag/zerotier.tar.gz"
+                wgetcurl.sh "/etc/storage/zerotier-one/zerotier.tar.gz" "https://github.com/lmq8267/ZeroTierOne/releases/download/$tag/zerotier.tar.gz" "https://hub.gitmirror.com/https://github.com/lmq8267/ZeroTierOne/releases/download/$tag/zerotier.tar.gz"
            fi
        else
               logger -t "【ZeroTier】" "最新版本获取失败，开始下载备用程序zerotier_v1.10.6"
               logger -t "【ZeroTier】" "若出现反复更新又下载，请关闭自动更新"
 	      rm -rf /etc/storage/zerotier-one/MD5.txt
-              wgetcurl.sh "/etc/storage/zerotier-one/MD5.txt" "https://github.com/lmq8267/ZeroTierOne/releases/download/1.10.6/MD5.txt" "https://fastly.jsdelivr.net/gh/lmq8267/zerotier@master/install/1.10.6/tarMD5.txt"
+              wgetcurl.sh "/etc/storage/zerotier-one/MD5.txt" "https://github.com/lmq8267/ZeroTierOne/releases/download/1.10.6/MD5.txt" "https://hub.gitmirror.com/https://github.com/lmq8267/ZeroTierOne/releases/download/1.10.6/tarMD5.txt"
               if [ "$zerosize" -lt 2 ];then
                logger -t "【ZeroTier】" "您的设备/etc/storage空间剩余"$zerosize"M，不足2M，将下载安装包到内存安装"
                [ "$zerosize" -gt 1 ] && logger -t "【ZeroTier】" "可尝试手动上传zerotier.tar.gz和MD5.txt到内部存储/etc/storage/zerotier-one/目录里"
-               wgetcurl.sh "$SVC_PATH2" "https://github.com/lmq8267/ZeroTierOne/releases/download/1.10.6/zerotier.tar.gz" "https://fastly.jsdelivr.net/gh/lmq8267/zerotier@master/install/1.10.6/zerotier.tar.gz"
+               wgetcurl.sh "$SVC_PATH2" "https://github.com/lmq8267/ZeroTierOne/releases/download/1.10.6/zerotier.tar.gz" "https://hub.gitmirror.com/https://github.com/lmq8267/ZeroTierOne/releases/download/1.10.6/zerotier.tar.gz"
                else
                 logger -t "【ZeroTier】" "您的设备/etc/storage空间充足:"$zerosize"M，将下载安装包到内部存储"
-                wgetcurl.sh "/etc/storage/zerotier-one/zerotier.tar.gz" "https://github.com/lmq8267/ZeroTierOne/releases/download/1.10.6/zerotier.tar.gz" "https://fastly.jsdelivr.net/gh/lmq8267/zerotier@master/install/1.10.6/zerotier.tar.gz"
+                wgetcurl.sh "/etc/storage/zerotier-one/zerotier.tar.gz" "https://github.com/lmq8267/ZeroTierOne/releases/download/1.10.6/zerotier.tar.gz" "https://hub.gitmirror.com/https://github.com/lmq8267/ZeroTierOne/releases/download/1.10.6/zerotier.tar.gz"
               fi
         fi
         [ ! -s "$SVC_PATH2" ] && [ -s "/etc/storage/zerotier-one/zerotier.tar.gz" ] && cp -rf /etc/storage/zerotier-one/zerotier.tar.gz "$SVC_PATH2"
