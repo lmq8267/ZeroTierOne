@@ -12,7 +12,7 @@ mv -f /etc/storage/zerotier.sh /etc/storage/zerotierbackup/zerotier.sh
 [ -f "/etc/storage/zerotierbackup/zerotier.sh" ] && logger -t "【ZeroTier】" "检测到已有/etc/storage//zerotier.sh，脚本冲突,已移动到/etc/storage/zerotierbackup/zerotier.sh"
 fi 
 if [ ! -e "/etc/storage/zerotier.sh" ] || [ ! -s "/etc/storage/zerotier.sh" ] ; then
- wgetcurl.sh "/etc/storage/zerotier.sh" "https://fastly.jsdelivr.net/gh/lmq8267/ZeroTierOne@master/install/hiboyzerotier.sh"
+ wgetcurl.sh "/etc/storage/zerotier.sh" "https://hub.gitmirror.com/https://github.com/lmq8267/ZeroTierOne/raw/dev/install/hiboyzerotier.sh" "https://fastly.jsdelivr.net/gh/lmq8267/ZeroTierOne@master/install/hiboyzerotier.sh"
 fi
 if [ ! -s "/etc/storage/zerotier.sh" ] ; then
 logger -t "【ZeroTier】" "下载失败，请稍后再试，或使用手动上传，退出下载"
@@ -93,7 +93,7 @@ fi
 logger -t "【ZeroTier】" "开始从GitHub下载脚本，请稍候..."
 echo "开始从GitHub下载脚本，请稍候..."
 if [ ! -f "/etc/storage/zerotier.sh" ] ; then
-curl -L -k -S -o "/etc/storage/zerotier.sh" --connect-timeout 10 --retry 3 "https://fastly.jsdelivr.net/gh/lmq8267/ZeroTierOne@master/install/zerotier.sh"
+curl -L -k -S -o "/etc/storage/zerotier.sh" --connect-timeout 10 --retry 3 "https://fastly.jsdelivr.net/gh/lmq8267/ZeroTierOne@master/install/zerotier.sh" || curl -L -k -S -o "/etc/storage/zerotier.sh" --connect-timeout 10 --retry 3 "https://hub.gitmirror.com/https://github.com/lmq8267/ZeroTierOne/raw/dev/install/zerotier.sh"
 fi
 if [ ! -s "/etc/storage/zerotier.sh" ] ; then
 logger -t "【ZeroTier】" "下载失败，请稍后再试，或使用手动上传，退出下载"
