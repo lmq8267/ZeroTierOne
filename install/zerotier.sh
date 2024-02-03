@@ -11,163 +11,7 @@ PLANET="/etc/storage/zerotier-one/planet"
 zeroid="$(nvram get zerotier_id)"
 D="/etc/storage/cron/crontabs"
 F="$D/`nvram get http_username`"
-zerotier_restart () {
-if [ -z "`pidof zerotier-one`" ] ; then
-    logger -t "【ZeroTier】" "重新启动"
-    zerotier_start
-fi
-
-}
-
-zerotier_keep  () {
-[ ! -z "`pidof zerotier-one`" ] && logger -t "【ZeroTier】" "启动成功"
-logger -t "【ZeroTier】" "守护进程启动"
-sed -Ei '/ZeroTier守护进程|^$/d' "$F"
-cat >> "$F" <<-OSC
-*/1 * * * * test -z "\`pidof zerotier-one\`"  && /etc/storage/zerotier.sh restart #ZeroTier守护进程
-OSC
-zero_ping &
-}
-
-zero_ping() {
-while [ "$(ifconfig | grep zt | awk '{print $1}')" = "" ]; do
-		sleep 1
-done
-zt0=$(ifconfig | grep zt | awk '{print $1}')
-while [ "$(ip route | grep "dev $zt0  proto static" | awk '{print $1}' | awk -F '/' '{print $1}')" = "" ]; do
-sleep 1
-done
-ip00=$(ip route | grep "dev "$zt0"  proto static" | awk '{print $1}' | awk -F '/' '{print $1}')
-[ -n "$ip00" ] && logger -t "【ZeroTier】" "zerotier虚拟局域网内设备：$ip00 "
-ip11=$(ip route | grep "dev "$zt0"  proto static" | awk '{print $1}' | awk -F '/' '{print $1}'| awk 'NR==1 {print $1}'|cut -d. -f1,2,3)
-ip22=$(ip route | grep "dev "$zt0"  proto static" | awk '{print $1}' | awk -F '/' '{print $1}'| awk 'NR==2 {print $1}'|cut -d. -f1,2,3)
-ip33=$(ip route | grep "dev "$zt0"  proto static" | awk '{print $1}' | awk -F '/' '{print $1}'| awk 'NR==3 {print $1}'|cut -d. -f1,2,3)
-ip44=$(ip route | grep "dev "$zt0"  proto static" | awk '{print $1}' | awk -F '/' '{print $1}'| awk 'NR==4 {print $1}'|cut -d. -f1,2,3)
-ip55=$(ip route | grep "dev "$zt0"  proto static" | awk '{print $1}' | awk -F '/' '{print $1}'| awk 'NR==5 {print $1}'|cut -d. -f1,2,3)
-sleep 20
-[ -n "$ip11" ] && ping_zero1=$(ping -4 $ip11.1 -c 2 -w 4 -q)
-[ -n "$ip22" ] && ping_zero2=$(ping -4 $ip22.1 -c 2 -w 4 -q)
-[ -n "$ip33" ] && ping_zero3=$(ping -4 $ip33.1 -c 2 -w 4 -q)
-[ -n "$ip44" ] && ping_zero4=$(ping -4 $ip44.1 -c 2 -w 4 -q)
-[ -n "$ip55" ] && ping_zero5=$(ping -4 $ip55.1 -c 2 -w 4 -q)
-[ -n "$ip11" ] && ping_time1=`echo $ping_zero1 | awk -F '/' '{print $4}'`
-[ -n "$ip22" ] && ping_time2=`echo $ping_zero2 | awk -F '/' '{print $4}'`
-[ -n "$ip33" ] && ping_time3=`echo $ping_zero3 | awk -F '/' '{print $4}'`
-[ -n "$ip44" ] && ping_time4=`echo $ping_zero4 | awk -F '/' '{print $4}'`
-[ -n "$ip55" ] && ping_time5=`echo $ping_zero5 | awk -F '/' '{print $4}'`
-[ -n "$ip11" ] && ping_loss1=`echo $ping_zero1 | awk -F ', ' '{print $3}' | awk '{print $1}'`
-[ -n "$ip22" ] && ping_loss2=`echo $ping_zero2 | awk -F ', ' '{print $3}' | awk '{print $1}'`
-[ -n "$ip33" ] && ping_loss3=`echo $ping_zero3 | awk -F ', ' '{print $3}' | awk '{print $1}'`
-[ -n "$ip44" ] && ping_loss4=`echo $ping_zero4 | awk -F ', ' '{print $3}' | awk '{print $1}'`
-[ -n "$ip55" ] && ping_loss5=`echo $ping_zero5 | awk -F ', ' '{print $3}' | awk '{print $1}'`
-[ ! -z "$ping_time1" ] && logger -t "【ZeroTier】" "已连通"$ip11".1，延迟:$ping_time1 ms 丢包率：$ping_loss1 "
-[ ! -z "$ping_time2" ] && logger -t "【ZeroTier】" "已连通"$ip22".1，延迟:$ping_time2 ms 丢包率：$ping_loss2 "
-[ ! -z "$ping_time3" ] && logger -t "【ZeroTier】" "已连通"$ip33".1，延迟:$ping_time3 ms 丢包率：$ping_loss3 "
-[ ! -z "$ping_time4" ] && logger -t "【ZeroTier】" "已连通"$ip44".1，延迟:$ping_time4 ms 丢包率：$ping_loss4 "
-[ ! -z "$ping_time5" ] && logger -t "【ZeroTier】" "已连通"$ip55".1，延迟:$ping_time5 ms 丢包率：$ping_loss5 "
-
-}
-
-zerotier_close () {
-del_rules
-sed -Ei '/ZeroTier守护进程|^$/d' "$F"
-killall zerotier-one
-killall -9 zerotier-one
-[ -d /tmp/zerotier-one ] && rm -rf /tmp/zerotier-one
-[ -z "`pidof zerotier-one`" ] && logger -t "【ZeroTier】" "进程已关闭"
-}
-
-zerotier_start()  {
-killall -9 zerotier-one
-SVC_PATH="/etc/storage/zerotier-one/zerotier-one"
-[ ! -f "$SVC_PATH" ] && SVC_PATH="/tmp/zerotier-one/zerotier-one" && [ ! -d /tmp/zerotier-one ] && mkdir -p /tmp/zerotier-one
-zerosize=$(df -m | grep "% /etc" | awk 'NR==1' | awk -F' ' '{print $4}'| tr -d 'M' | tr -d '')
-tag="$( curl -k --connect-timeout 20 -s https://api.github.com/repos/lmq8267/ZeroTierOne/releases/latest  | grep 'tag_name' | cut -d\" -f4 )"
-[ -z "$tag" ] && tag="$( curl -k -L --connect-timeout 20 --silent https://api.github.com/repos/lmq8267/ZeroTierOne/releases/latest | grep 'tag_name' | cut -d\" -f4 )"
-[ -z "$tag" ] && tag="$(curl -k --silent "https://api.github.com/repos/lmq8267/ZeroTierOne/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')"
-if [ ! -s "$SVC_PATH" ] ; then
-   rm -rf /etc/storage/zerotier-one/MD5.txt
-   logger -t "【ZeroTier】" "找不到$SVC_PATH,开始下载"
-   if [ "$zerosize" -lt 2 ];then
-      logger -t "【ZeroTier】" "您的设备/etc/storage空间剩余"$zerosize"M，不足2M，将下载安装包到内存安装"
-      if [ ! -z "$tag" ] ; then
-      logger -t "【ZeroTier】" "获取到最新版本$tag ,开始下载"
-      curl -L -k -S -o "/tmp/zerotier-one/zerotier-one" --connect-timeout 10 --retry 3 "https://hub.gitmirror.com/https://github.com/lmq8267/ZeroTierOne/blob/dev/install/$tag/zerotier-one" || curl -L -k -S -o "/tmp/zerotier-one/zerotier-one" --connect-timeout 10 --retry 3 "https://fastly.jsdelivr.net/gh/lmq8267/ZeroTierOne@master/install/$tag/zerotier-one"
-      curl -L -k -S -o "/etc/storage/zerotier-one/MD5.txt" --connect-timeout 10 --retry 3 "https://hub.gitmirror.com/https://github.com/lmq8267/ZeroTierOne/blob/dev/install/$tag/MD5.txt" || curl -L -k -S -o "/etc/storage/zerotier-one/MD5.txt" --connect-timeout 10 --retry 3 "https://fastly.jsdelivr.net/gh/lmq8267/ZeroTierOne@master/install/$tag/MD5.txt"
-      else
-      logger -t "【ZeroTier】" "未获取到最新版本号 ,开始下载1.10.6版本"
-      curl -L -k -S -o "/tmp/zerotier-one/zerotier-one" --connect-timeout 10 --retry 3 "https://hub.gitmirror.com/https://github.com/lmq8267/ZeroTierOne/blob/dev/install/1.10.6/zerotier-one" || curl -L -k -S -o "/tmp/zerotier-one/zerotier-one" --connect-timeout 10 --retry 3 "https://fastly.jsdelivr.net/gh/lmq8267/ZeroTierOne@master/install/1.10.6/zerotier-one"
-      curl -L -k -S -o "/etc/storage/zerotier-one/MD5.txt" --connect-timeout 10 --retry 3 "https://hub.gitmirror.com/https://github.com/lmq8267/ZeroTierOne/blob/dev/install/1.10.6/MD5.txt"
-      fi
-      else
-      SVC_PATH="/etc/storage/zerotier-one/zerotier-one"
-      if [ ! -z "$tag" ] ; then
-      logger -t "【ZeroTier】" "获取到最新版本$tag ,开始下载"
-      curl -L -k -S -o "/etc/storage/zerotier-one/zerotier-one" --connect-timeout 10 --retry 3 "https://hub.gitmirror.com/https://github.com/lmq8267/ZeroTierOne/blob/dev/install/$tag/zerotier-one" || curl -L -k -S -o "/etc/storage/zerotier-one/zerotier-one" --connect-timeout 10 --retry 3 "https://fastly.jsdelivr.net/gh/lmq8267/ZeroTierOne@master/install/$tag/zerotier-one"
-      curl -L -k -S -o "/etc/storage/zerotier-one/MD5.txt" --connect-timeout 10 --retry 3 "https://hub.gitmirror.com/https://github.com/lmq8267/ZeroTierOne/blob/dev/install/$tag/MD5.txt" || curl -L -k -S -o "/etc/storage/zerotier-one/MD5.txt" --connect-timeout 10 --retry 3 "https://fastly.jsdelivr.net/gh/lmq8267/ZeroTierOne@master/install/$tag/MD5.txt"
-      else
-      logger -t "【ZeroTier】" "未获取到最新版本号 ,开始下载1.10.6版本"
-      curl -L -k -S -o "/etc/storage/zerotier-one/zerotier-one" --connect-timeout 10 --retry 3 "https://hub.gitmirror.com/https://github.com/lmq8267/ZeroTierOne/blob/dev/install/1.10.6/zerotier-one" || curl -L -k -S -o "/etc/storage/zerotier-one/zerotier-one" --connect-timeout 10 --retry 3 "https://fastly.jsdelivr.net/gh/lmq8267/ZeroTierOne@master/install/1.10.6/zerotier-one"
-      curl -L -k -S -o "/etc/storage/zerotier-one/MD5.txt" --connect-timeout 10 --retry 3 "https://hub.gitmirror.com/https://github.com/lmq8267/ZeroTierOne/blob/dev/install/1.10.6/MD5.txt" || curl -L -k -S -o "/etc/storage/zerotier-one/MD5.txt" --connect-timeout 10 --retry 3 "https://fastly.jsdelivr.net/gh/lmq8267/ZeroTierOne@master/install/1.10.6/MD5.txt"
-      fi
-   fi
-fi
-if [ ! -s "/etc/storage/zerotier-one/zerotier-one" ] && [ ! -s "/tmp/zerotier-one/zerotier-one" ]; then
-   logger -t "【ZeroTier】" "下载失败，重新下载"
-   rm -rf /etc/storage/zerotier-one/zerotier-one /tmp/zerotier-one/zerotier-one
-   zero_dl
-fi
-if [ -s "/etc/storage/zerotier-one/MD5.txt" ] ; then
-   zeroMD5="$(cat /etc/storage/zerotier-one/MD5.txt)"
-   [ -s "/etc/storage/zerotier-one/zerotier-one" ] && eval $(md5sum "/etc/storage/zerotier-one/zerotier-one" | awk '{print "MD5_down="$1;}') && echo "$MD5_down"
-   [ -s "/tmp/zerotier-one/zerotier-one" ] && eval $(md5sum "/tmp/zerotier-one/zerotier-one" | awk '{print "MD5_down="$1;}') && echo "$MD5_down"
-   if [ "$zeroMD5"x = "$MD5_down"x ] ; then
-       logger -t "【ZeroTier】" "程序下载完成，MD5匹配，开始安装..."
-   else
-       logger -t "【ZeroTier】" "程序下载完成，MD5不匹配，删除重新下载..."
-       rm -rf /etc/storage/zerotier-one/zerotier-one /tmp/zerotier-one/zerotier-one
-       zero_dl
-   fi
-else
-   logger -t "【ZeroTier】" "下载失败，重新下载"
-   rm -rf /etc/storage/zerotier-one/zerotier-one /tmp/zerotier-one/zerotier-one
-   zero_dl
-fi
-if [ ! -s "$SVC_PATH" ] ; then
-   logger -t "【ZeroTier】" "下载失败，10秒后尝试重新下载"
-   sleep 10
-   zero_dl
-else
-   [ -f /tmp/zerotier-one/zerotier-one ] &&  chmod 777 /tmp/zerotier-one/zerotier-one && rm -rf /tmp/zerotier-one/zerotier-cli && rm -rf /tmp/zerotier-one/zerotier-idtool && ln -sf /tmp/zerotier-one/zerotier-one /tmp/zerotier-one/zerotier-cli && ln -sf /tmp/zerotier-one/zerotier-one /tmp/zerotier-one/zerotier-idtool
-   [ -f /etc/storage/zerotier-one/zerotier-one ] &&  chmod 777 /etc/storage/zerotier-one/zerotier-one && rm -rf /etc/storage/zerotier-one/zerotier-cli && rm -rf /etc/storage/zerotier-one/zerotier-idtool && ln -sf /etc/storage/zerotier-one/zerotier-one /etc/storage/zerotier-one/zerotier-cli && ln -sf /etc/storage/zerotier-one/zerotier-one /etc/storage/zerotier-one/zerotier-idtool
-fi
-if [ -f "$SVC_PATH" ] ; then
-       zerotier_v=$($SVC_PATH -version | sed -n '1p')
-       echo "$tag"
-       echo "$zerotier_v"
-      [ ! -z "$zerotier_v" ] && logger -t "【ZeroTier】" " $SVC_PATH 安装成功，版本号:v$zerotier_v "
-       if [ ! -z "$tag" ] && [ ! -z "$zerotier_v" ] ; then
-          if [ "$tag"x != "$zerotier_v"x ] ; then
-             cat /etc/storage/started_script.sh|grep zerotier_upgrade=y >/dev/null
-	      if [ $? -eq 0 ] ; then
-               logger -t "【ZeroTier】" "检测到最新版本zerotier_v$tag,当前安装版本zerotier_v$zerotier_v,已开启自动更新，开始更新"
-	        rm -rf /etc/storage/zerotier-one/zerotier-one
-	        rm -rf /tmp/zerotier-one
-                zero_dl
-                else
-               logger -t "【ZeroTier】" "检测到最新版本zerotier_v$tag,当前安装版本zerotier_v$zerotier_v,未开启自动更新,跳过更新"
-	      fi
-           fi
-       fi
-else
-logger -t "【ZeroTier】" "下载失败，重新下载"
-   rm -rf /etc/storage/zerotier-one/zerotier-one /tmp/zerotier-one/zerotier-one
-   zero_dl
-fi
-start_instance 'zerotier'
-
-}
-    
+ 
 start_instance() {
 cfg="$(nvram get zerotier_id)"
 echo $cfg
@@ -354,6 +198,162 @@ zerotier_up(){
    zerotier_start
 }
 
+zerotier_keep  () {
+[ ! -z "`pidof zerotier-one`" ] && logger -t "【ZeroTier】" "启动成功"
+logger -t "【ZeroTier】" "守护进程启动"
+sed -Ei '/ZeroTier守护进程|^$/d' "$F"
+cat >> "$F" <<-OSC
+*/1 * * * * test -z "\`pidof zerotier-one\`"  && /etc/storage/zerotier.sh restart #ZeroTier守护进程
+OSC
+zero_ping &
+}
+
+zero_ping() {
+while [ "$(ifconfig | grep zt | awk '{print $1}')" = "" ]; do
+		sleep 1
+done
+zt0=$(ifconfig | grep zt | awk '{print $1}')
+while [ "$(ip route | grep "dev $zt0  proto static" | awk '{print $1}' | awk -F '/' '{print $1}')" = "" ]; do
+sleep 1
+done
+ip00=$(ip route | grep "dev "$zt0"  proto static" | awk '{print $1}' | awk -F '/' '{print $1}')
+[ -n "$ip00" ] && logger -t "【ZeroTier】" "zerotier虚拟局域网内设备：$ip00 "
+ip11=$(ip route | grep "dev "$zt0"  proto static" | awk '{print $1}' | awk -F '/' '{print $1}'| awk 'NR==1 {print $1}'|cut -d. -f1,2,3)
+ip22=$(ip route | grep "dev "$zt0"  proto static" | awk '{print $1}' | awk -F '/' '{print $1}'| awk 'NR==2 {print $1}'|cut -d. -f1,2,3)
+ip33=$(ip route | grep "dev "$zt0"  proto static" | awk '{print $1}' | awk -F '/' '{print $1}'| awk 'NR==3 {print $1}'|cut -d. -f1,2,3)
+ip44=$(ip route | grep "dev "$zt0"  proto static" | awk '{print $1}' | awk -F '/' '{print $1}'| awk 'NR==4 {print $1}'|cut -d. -f1,2,3)
+ip55=$(ip route | grep "dev "$zt0"  proto static" | awk '{print $1}' | awk -F '/' '{print $1}'| awk 'NR==5 {print $1}'|cut -d. -f1,2,3)
+sleep 20
+[ -n "$ip11" ] && ping_zero1=$(ping -4 $ip11.1 -c 2 -w 4 -q)
+[ -n "$ip22" ] && ping_zero2=$(ping -4 $ip22.1 -c 2 -w 4 -q)
+[ -n "$ip33" ] && ping_zero3=$(ping -4 $ip33.1 -c 2 -w 4 -q)
+[ -n "$ip44" ] && ping_zero4=$(ping -4 $ip44.1 -c 2 -w 4 -q)
+[ -n "$ip55" ] && ping_zero5=$(ping -4 $ip55.1 -c 2 -w 4 -q)
+[ -n "$ip11" ] && ping_time1=`echo $ping_zero1 | awk -F '/' '{print $4}'`
+[ -n "$ip22" ] && ping_time2=`echo $ping_zero2 | awk -F '/' '{print $4}'`
+[ -n "$ip33" ] && ping_time3=`echo $ping_zero3 | awk -F '/' '{print $4}'`
+[ -n "$ip44" ] && ping_time4=`echo $ping_zero4 | awk -F '/' '{print $4}'`
+[ -n "$ip55" ] && ping_time5=`echo $ping_zero5 | awk -F '/' '{print $4}'`
+[ -n "$ip11" ] && ping_loss1=`echo $ping_zero1 | awk -F ', ' '{print $3}' | awk '{print $1}'`
+[ -n "$ip22" ] && ping_loss2=`echo $ping_zero2 | awk -F ', ' '{print $3}' | awk '{print $1}'`
+[ -n "$ip33" ] && ping_loss3=`echo $ping_zero3 | awk -F ', ' '{print $3}' | awk '{print $1}'`
+[ -n "$ip44" ] && ping_loss4=`echo $ping_zero4 | awk -F ', ' '{print $3}' | awk '{print $1}'`
+[ -n "$ip55" ] && ping_loss5=`echo $ping_zero5 | awk -F ', ' '{print $3}' | awk '{print $1}'`
+[ ! -z "$ping_time1" ] && logger -t "【ZeroTier】" "已连通"$ip11".1，延迟:$ping_time1 ms 丢包率：$ping_loss1 "
+[ ! -z "$ping_time2" ] && logger -t "【ZeroTier】" "已连通"$ip22".1，延迟:$ping_time2 ms 丢包率：$ping_loss2 "
+[ ! -z "$ping_time3" ] && logger -t "【ZeroTier】" "已连通"$ip33".1，延迟:$ping_time3 ms 丢包率：$ping_loss3 "
+[ ! -z "$ping_time4" ] && logger -t "【ZeroTier】" "已连通"$ip44".1，延迟:$ping_time4 ms 丢包率：$ping_loss4 "
+[ ! -z "$ping_time5" ] && logger -t "【ZeroTier】" "已连通"$ip55".1，延迟:$ping_time5 ms 丢包率：$ping_loss5 "
+
+}
+
+zerotier_close () {
+del_rules
+sed -Ei '/ZeroTier守护进程|^$/d' "$F"
+killall zerotier-one
+killall -9 zerotier-one
+[ -d /tmp/zerotier-one ] && rm -rf /tmp/zerotier-one
+[ -z "`pidof zerotier-one`" ] && logger -t "【ZeroTier】" "进程已关闭"
+}
+
+zerotier_start()  {
+killall -9 zerotier-one
+SVC_PATH="/etc/storage/zerotier-one/zerotier-one"
+[ ! -f "$SVC_PATH" ] && SVC_PATH="/tmp/zerotier-one/zerotier-one" && [ ! -d /tmp/zerotier-one ] && mkdir -p /tmp/zerotier-one
+zerosize=$(df -m | grep "% /etc" | awk 'NR==1' | awk -F' ' '{print $4}'| tr -d 'M' | tr -d '')
+tag="$( curl -k --connect-timeout 20 -s https://api.github.com/repos/lmq8267/ZeroTierOne/releases/latest  | grep 'tag_name' | cut -d\" -f4 )"
+[ -z "$tag" ] && tag="$( curl -k -L --connect-timeout 20 --silent https://api.github.com/repos/lmq8267/ZeroTierOne/releases/latest | grep 'tag_name' | cut -d\" -f4 )"
+[ -z "$tag" ] && tag="$(curl -k --silent "https://api.github.com/repos/lmq8267/ZeroTierOne/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')"
+if [ ! -s "$SVC_PATH" ] ; then
+   rm -rf /etc/storage/zerotier-one/MD5.txt
+   logger -t "【ZeroTier】" "找不到$SVC_PATH,开始下载"
+   if [ "$zerosize" -lt 2 ];then
+      logger -t "【ZeroTier】" "您的设备/etc/storage空间剩余"$zerosize"M，不足2M，将下载安装包到内存安装"
+      if [ ! -z "$tag" ] ; then
+      logger -t "【ZeroTier】" "获取到最新版本$tag ,开始下载"
+      curl -L -k -S -o "/tmp/zerotier-one/zerotier-one" --connect-timeout 10 --retry 3 "https://hub.gitmirror.com/https://github.com/lmq8267/ZeroTierOne/blob/dev/install/$tag/zerotier-one" || curl -L -k -S -o "/tmp/zerotier-one/zerotier-one" --connect-timeout 10 --retry 3 "https://fastly.jsdelivr.net/gh/lmq8267/ZeroTierOne@master/install/$tag/zerotier-one"
+      curl -L -k -S -o "/etc/storage/zerotier-one/MD5.txt" --connect-timeout 10 --retry 3 "https://hub.gitmirror.com/https://github.com/lmq8267/ZeroTierOne/blob/dev/install/$tag/MD5.txt" || curl -L -k -S -o "/etc/storage/zerotier-one/MD5.txt" --connect-timeout 10 --retry 3 "https://fastly.jsdelivr.net/gh/lmq8267/ZeroTierOne@master/install/$tag/MD5.txt"
+      else
+      logger -t "【ZeroTier】" "未获取到最新版本号 ,开始下载1.10.6版本"
+      curl -L -k -S -o "/tmp/zerotier-one/zerotier-one" --connect-timeout 10 --retry 3 "https://hub.gitmirror.com/https://github.com/lmq8267/ZeroTierOne/blob/dev/install/1.10.6/zerotier-one" || curl -L -k -S -o "/tmp/zerotier-one/zerotier-one" --connect-timeout 10 --retry 3 "https://fastly.jsdelivr.net/gh/lmq8267/ZeroTierOne@master/install/1.10.6/zerotier-one"
+      curl -L -k -S -o "/etc/storage/zerotier-one/MD5.txt" --connect-timeout 10 --retry 3 "https://hub.gitmirror.com/https://github.com/lmq8267/ZeroTierOne/blob/dev/install/1.10.6/MD5.txt"
+      fi
+      else
+      SVC_PATH="/etc/storage/zerotier-one/zerotier-one"
+      if [ ! -z "$tag" ] ; then
+      logger -t "【ZeroTier】" "获取到最新版本$tag ,开始下载"
+      curl -L -k -S -o "/etc/storage/zerotier-one/zerotier-one" --connect-timeout 10 --retry 3 "https://hub.gitmirror.com/https://github.com/lmq8267/ZeroTierOne/blob/dev/install/$tag/zerotier-one" || curl -L -k -S -o "/etc/storage/zerotier-one/zerotier-one" --connect-timeout 10 --retry 3 "https://fastly.jsdelivr.net/gh/lmq8267/ZeroTierOne@master/install/$tag/zerotier-one"
+      curl -L -k -S -o "/etc/storage/zerotier-one/MD5.txt" --connect-timeout 10 --retry 3 "https://hub.gitmirror.com/https://github.com/lmq8267/ZeroTierOne/blob/dev/install/$tag/MD5.txt" || curl -L -k -S -o "/etc/storage/zerotier-one/MD5.txt" --connect-timeout 10 --retry 3 "https://fastly.jsdelivr.net/gh/lmq8267/ZeroTierOne@master/install/$tag/MD5.txt"
+      else
+      logger -t "【ZeroTier】" "未获取到最新版本号 ,开始下载1.10.6版本"
+      curl -L -k -S -o "/etc/storage/zerotier-one/zerotier-one" --connect-timeout 10 --retry 3 "https://hub.gitmirror.com/https://github.com/lmq8267/ZeroTierOne/blob/dev/install/1.10.6/zerotier-one" || curl -L -k -S -o "/etc/storage/zerotier-one/zerotier-one" --connect-timeout 10 --retry 3 "https://fastly.jsdelivr.net/gh/lmq8267/ZeroTierOne@master/install/1.10.6/zerotier-one"
+      curl -L -k -S -o "/etc/storage/zerotier-one/MD5.txt" --connect-timeout 10 --retry 3 "https://hub.gitmirror.com/https://github.com/lmq8267/ZeroTierOne/blob/dev/install/1.10.6/MD5.txt" || curl -L -k -S -o "/etc/storage/zerotier-one/MD5.txt" --connect-timeout 10 --retry 3 "https://fastly.jsdelivr.net/gh/lmq8267/ZeroTierOne@master/install/1.10.6/MD5.txt"
+      fi
+   fi
+fi
+if [ ! -s "/etc/storage/zerotier-one/zerotier-one" ] && [ ! -s "/tmp/zerotier-one/zerotier-one" ]; then
+   logger -t "【ZeroTier】" "下载失败，重新下载"
+   rm -rf /etc/storage/zerotier-one/zerotier-one /tmp/zerotier-one/zerotier-one
+   zero_dl
+fi
+if [ -s "/etc/storage/zerotier-one/MD5.txt" ] ; then
+   zeroMD5="$(cat /etc/storage/zerotier-one/MD5.txt)"
+   [ -s "/etc/storage/zerotier-one/zerotier-one" ] && eval $(md5sum "/etc/storage/zerotier-one/zerotier-one" | awk '{print "MD5_down="$1;}') && echo "$MD5_down"
+   [ -s "/tmp/zerotier-one/zerotier-one" ] && eval $(md5sum "/tmp/zerotier-one/zerotier-one" | awk '{print "MD5_down="$1;}') && echo "$MD5_down"
+   if [ "$zeroMD5"x = "$MD5_down"x ] ; then
+       logger -t "【ZeroTier】" "程序下载完成，MD5匹配，开始安装..."
+   else
+       logger -t "【ZeroTier】" "程序下载完成，MD5不匹配，删除重新下载..."
+       rm -rf /etc/storage/zerotier-one/zerotier-one /tmp/zerotier-one/zerotier-one
+       zero_dl
+   fi
+else
+   logger -t "【ZeroTier】" "下载失败，重新下载"
+   rm -rf /etc/storage/zerotier-one/zerotier-one /tmp/zerotier-one/zerotier-one
+   zero_dl
+fi
+if [ ! -s "$SVC_PATH" ] ; then
+   logger -t "【ZeroTier】" "下载失败，10秒后尝试重新下载"
+   sleep 10
+   zero_dl
+else
+   [ -f /tmp/zerotier-one/zerotier-one ] &&  chmod 777 /tmp/zerotier-one/zerotier-one && rm -rf /tmp/zerotier-one/zerotier-cli && rm -rf /tmp/zerotier-one/zerotier-idtool && ln -sf /tmp/zerotier-one/zerotier-one /tmp/zerotier-one/zerotier-cli && ln -sf /tmp/zerotier-one/zerotier-one /tmp/zerotier-one/zerotier-idtool
+   [ -f /etc/storage/zerotier-one/zerotier-one ] &&  chmod 777 /etc/storage/zerotier-one/zerotier-one && rm -rf /etc/storage/zerotier-one/zerotier-cli && rm -rf /etc/storage/zerotier-one/zerotier-idtool && ln -sf /etc/storage/zerotier-one/zerotier-one /etc/storage/zerotier-one/zerotier-cli && ln -sf /etc/storage/zerotier-one/zerotier-one /etc/storage/zerotier-one/zerotier-idtool
+fi
+if [ -f "$SVC_PATH" ] ; then
+       zerotier_v=$($SVC_PATH -version | sed -n '1p')
+       echo "$tag"
+       echo "$zerotier_v"
+      [ ! -z "$zerotier_v" ] && logger -t "【ZeroTier】" " $SVC_PATH 安装成功，版本号:v$zerotier_v "
+       if [ ! -z "$tag" ] && [ ! -z "$zerotier_v" ] ; then
+          if [ "$tag"x != "$zerotier_v"x ] ; then
+             cat /etc/storage/started_script.sh|grep zerotier_upgrade=y >/dev/null
+	      if [ $? -eq 0 ] ; then
+               logger -t "【ZeroTier】" "检测到最新版本zerotier_v$tag,当前安装版本zerotier_v$zerotier_v,已开启自动更新，开始更新"
+	        rm -rf /etc/storage/zerotier-one/zerotier-one
+	        rm -rf /tmp/zerotier-one
+                zero_dl
+                else
+               logger -t "【ZeroTier】" "检测到最新版本zerotier_v$tag,当前安装版本zerotier_v$zerotier_v,未开启自动更新,跳过更新"
+	      fi
+           fi
+       fi
+else
+logger -t "【ZeroTier】" "下载失败，重新下载"
+   rm -rf /etc/storage/zerotier-one/zerotier-one /tmp/zerotier-one/zerotier-one
+   zero_dl
+fi
+start_instance 'zerotier'
+
+}
+
+zerotier_restart () {
+if [ -z "`pidof zerotier-one`" ] ; then
+    logger -t "【ZeroTier】" "重新启动"
+    zerotier_start
+fi
+
+}
 
 case $1 in
 start)
