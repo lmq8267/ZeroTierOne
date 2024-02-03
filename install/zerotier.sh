@@ -100,6 +100,7 @@ if [ ! -s "$SVC_PATH" ] ; then
       curl -L -k -S -o "/etc/storage/zerotier-one/MD5.txt" --connect-timeout 10 --retry 3 "https://hub.gitmirror.com/https://github.com/lmq8267/ZeroTierOne/blob/dev/install/1.10.6/MD5.txt"
       fi
       else
+      SVC_PATH="/etc/storage/zerotier-one/zerotier-one"
       if [ ! -z "$tag" ] ; then
       logger -t "【ZeroTier】" "获取到最新版本$tag ,开始下载"
       curl -L -k -S -o "/etc/storage/zerotier-one/zerotier-one" --connect-timeout 10 --retry 3 "https://hub.gitmirror.com/https://github.com/lmq8267/ZeroTierOne/blob/dev/install/$tag/zerotier-one" || curl -L -k -S -o "/etc/storage/zerotier-one/zerotier-one" --connect-timeout 10 --retry 3 "https://fastly.jsdelivr.net/gh/lmq8267/ZeroTierOne@master/install/$tag/zerotier-one"
