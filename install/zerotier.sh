@@ -1,11 +1,11 @@
 #!/bin/sh
 
 PROG=/etc/storage/zerotier-one/zerotier-one
-[ ! -f $PROG ] && PROG=/tmp/zerotier-one/zerotier-one
+[ ! -f "$PROG" ] && PROG=/tmp/zerotier-one/zerotier-one
 PROGCLI=/etc/storage/zerotier-one/zerotier-cli
-[ ! -f $PROGCLI ] && PROGCLI=/tmp/zerotier-one/zerotier-cli
+[ ! -f "$PROGCLI" ] && PROGCLI=/tmp/zerotier-one/zerotier-cli
 PROGIDT=/etc/storage/zerotier-one/zerotier-idtool
-[ ! -f $PROGIDT ] && PROGIDT=/tmp/zerotier-one/zerotier-idtool
+[ ! -f "$PROGIDT" ] && PROGIDT=/tmp/zerotier-one/zerotier-idtool
 config_path="/etc/storage/zerotier-one"
 PLANET="/etc/storage/zerotier-one/planet"
 zeroid="$(nvram get zerotier_id)"
