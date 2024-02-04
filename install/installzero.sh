@@ -124,8 +124,8 @@ nvram set zeromoonwan=
 #zerotier自动更新版本,留空不启用，启用填=y
 zerotier_upgrade=
 
-#启用开机自启              
-/etc/storage/zerotier.sh start &
+#无需设置开机自启              
+#使用此命令启动后 开机后会自启 ：/etc/storage/zerotier.sh start &
 #################################################################
 
 OSC
