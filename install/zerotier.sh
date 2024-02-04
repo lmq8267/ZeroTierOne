@@ -29,8 +29,9 @@ if [ -n "$port" ]; then
    args="$args -p$port"
 fi
 if [ -z "$secret" ]; then
-   [ ! -n "$cfg" ] && logger -t "【ZeroTier】" "无法启动，即将退出..." && logger -t "【ZeroTier】" "未获取到zerotier id，请确认在自定义设置-脚本-在路由器启动后执行里已填写好zerotier id" && logger -t "【ZeroTier】" "填好后，在系统管理-控制台输入一次nvram set zerotier_id=你的zerotier id" && logger -t "【ZeroTier】" "然后手动启动，在系统管理-控制台输入一次 /etc/storage/zerotier.sh start" && exit 1
+   [ ! -n "$cfg" ] && logger -t "【ZeroTier】" "无法启动，即将退出..." ; echo "没有设置zerotier_id，程序退出" && logger -t "【ZeroTier】" "未获取到zerotier id，请确认在自定义设置-脚本-在路由器启动后执行里已填写好zerotier id" && logger -t "【ZeroTier】" "填好后，在系统管理-控制台输入一次nvram set zerotier_id=你的zerotier id" && logger -t "【ZeroTier】" "然后手动启动，在系统管理-控制台输入一次 /etc/storage/zerotier.sh start" && exit 1
    logger -t "【ZeroTier】" "设备密钥为空，正在生成密钥，请稍候..."
+   echo "设备密钥为空，正在生成密钥，请稍候..."
    sf="$config_path/identity.secret"
    pf="$config_path/identity.public"
    $PROGIDT generate "$sf" "$pf"  >/dev/null
@@ -41,11 +42,13 @@ if [ -z "$secret" ]; then
 fi
 if [ -n "$secret" ]; then
    logger -t "【ZeroTier】" "找到密钥文件，正在启动，请稍候..."
+   echo "找到密钥文件，正在启动，请稍候..."
    echo "$secret" >$config_path/identity.secret
    $PROGIDT getpublic $config_path/identity.secret >$config_path/identity.public
 fi
 if [ -n "$secret" ]; then
    logger -t "【ZeroTier】" "找到密钥文件，正在启动，请稍候..."
+   echo "找到密钥文件，正在启动，请稍候..."
    echo "$secret" >$config_path/identity.secret
    $PROGIDT getpublic $config_path/identity.secret >$config_path/identity.public
 fi
@@ -99,6 +102,7 @@ rules() {
 	done
 	zt0=$(ifconfig | grep zt | awk '{print $1}')
 	logger -t "【ZeroTier】" "已创建虚拟网卡 $zt0 "	
+        echo "已创建虚拟网卡 $zt0 "
 	ip44=$(ifconfig $zt0  | grep "inet addr:" | awk '{print $2}' | awk -F '/' '{print $1}'| tr -d 'addr:' | tr -d ' ')
         ip66=$(ifconfig $zt0  | grep "inet6 addr:" | awk '{print $3}' | awk '{print $1,$2}'| tr -d 'addr' | tr -d ' ')
         [ -n "$ip66" ] && logger -t "【ZeroTier】" ""$zt0"_ipv6:$ip66"
@@ -199,7 +203,7 @@ zerotier_up(){
 }
 
 zerotier_keep  () {
-[ ! -z "`pidof zerotier-one`" ] && logger -t "【ZeroTier】" "启动成功"
+[ ! -z "`pidof zerotier-one`" ] && logger -t "【ZeroTier】" "启动成功" ; echo "启动成功"
 logger -t "【ZeroTier】" "守护进程启动"
 sed -Ei '/ZeroTier守护进程|^$/d' "$F"
 cat >> "$F" <<-OSC
