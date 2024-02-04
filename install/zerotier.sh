@@ -31,6 +31,12 @@ fi
 if [ -z "$secret" ]; then
    [ ! -n "$cfg" ] && logger -t "【ZeroTier】" "无法启动，即将退出..." ; echo "没有设置zerotier_id，程序退出" && logger -t "【ZeroTier】" "未获取到zerotier id，请确认在自定义设置-脚本-在路由器启动后执行里已填写好zerotier id" && logger -t "【ZeroTier】" "填好后，在系统管理-控制台输入一次nvram set zerotier_id=你的zerotier id" && logger -t "【ZeroTier】" "然后手动启动，在系统管理-控制台输入一次 /etc/storage/zerotier.sh start" && exit 1
    logger -t "【ZeroTier】" "设备密钥为空，正在生成密钥，请稍候..."
+   PROG=/etc/storage/zerotier-one/zerotier-one
+[ ! -f "$PROG" ] && PROG=/tmp/zerotier-one/zerotier-one
+PROGCLI=/etc/storage/zerotier-one/zerotier-cli
+[ ! -f "$PROGCLI" ] && PROGCLI=/tmp/zerotier-one/zerotier-cli
+PROGIDT=/etc/storage/zerotier-one/zerotier-idtool
+[ ! -f "$PROGIDT" ] && PROGIDT=/tmp/zerotier-one/zerotier-idtool
    echo "设备密钥为空，正在生成密钥，请稍候..."
    sf="$config_path/identity.secret"
    pf="$config_path/identity.public"
