@@ -14,13 +14,16 @@ F="$D/`nvram get http_username`"
  
 start_instance() {
 cfg="$(nvram get zerotier_id)"
-echo $cfg
+echo "zerotier_id=$cfg"
 port=""
 args=""
-secret="$(cat /etc/storage/zerotier-one/identity.secret)"
 moonid="$(nvram get zerotier_moonid)"
 planet="$(nvram get zerotier_planet)"
-[ ! -s "/etc/storage/zerotier-one/identity.secret" ] && secret="$(nvram get zerotier_secret)"
+if [ ! -s "/etc/storage/zerotier-one/identity.secret" ] ; then
+secret="$(nvram get zerotier_secret)"
+else
+secret="$(cat /etc/storage/zerotier-one/identity.secret)"
+fi
 if [ ! -d "$config_path" ]; then
   mkdir -p $config_path
 fi
@@ -32,11 +35,11 @@ if [ -z "$secret" ]; then
    [ ! -n "$cfg" ] && logger -t "【ZeroTier】" "无法启动，即将退出..." ; echo "没有设置zerotier_id，程序退出" && logger -t "【ZeroTier】" "未获取到zerotier id，请确认在自定义设置-脚本-在路由器启动后执行里已填写好zerotier id" && logger -t "【ZeroTier】" "填好后，在系统管理-控制台输入一次nvram set zerotier_id=你的zerotier id" && logger -t "【ZeroTier】" "然后手动启动，在系统管理-控制台输入一次 /etc/storage/zerotier.sh start" && exit 1
    logger -t "【ZeroTier】" "设备密钥为空，正在生成密钥，请稍候..."
    PROG=/etc/storage/zerotier-one/zerotier-one
-[ ! -f "$PROG" ] && PROG=/tmp/zerotier-one/zerotier-one
-PROGCLI=/etc/storage/zerotier-one/zerotier-cli
-[ ! -f "$PROGCLI" ] && PROGCLI=/tmp/zerotier-one/zerotier-cli
-PROGIDT=/etc/storage/zerotier-one/zerotier-idtool
-[ ! -f "$PROGIDT" ] && PROGIDT=/tmp/zerotier-one/zerotier-idtool
+   [ ! -f "$PROG" ] && PROG=/tmp/zerotier-one/zerotier-one
+   PROGCLI=/etc/storage/zerotier-one/zerotier-cli
+   [ ! -f "$PROGCLI" ] && PROGCLI=/tmp/zerotier-one/zerotier-cli
+   PROGIDT=/etc/storage/zerotier-one/zerotier-idtool
+   [ ! -f "$PROGIDT" ] && PROGIDT=/tmp/zerotier-one/zerotier-idtool
    echo "设备密钥为空，正在生成密钥，请稍候..."
    sf="$config_path/identity.secret"
    pf="$config_path/identity.public"
@@ -45,19 +48,13 @@ PROGIDT=/etc/storage/zerotier-one/zerotier-idtool
    secret="$(cat $sf)"
    nvram set zerotier_secret="$secret"
    nvram commit
-fi
-if [ -n "$secret" ]; then
+else
    logger -t "【ZeroTier】" "找到密钥文件，正在启动，请稍候..."
    echo "找到密钥文件，正在启动，请稍候..."
    echo "$secret" >$config_path/identity.secret
    $PROGIDT getpublic $config_path/identity.secret >$config_path/identity.public
 fi
-if [ -n "$secret" ]; then
-   logger -t "【ZeroTier】" "找到密钥文件，正在启动，请稍候..."
-   echo "找到密钥文件，正在启动，请稍候..."
-   echo "$secret" >$config_path/identity.secret
-   $PROGIDT getpublic $config_path/identity.secret >$config_path/identity.public
-fi
+
 if [ -n "$planet"]; then
 		logger -t "【ZeroTier】" "找到planet,正在写入..."
 		echo "$planet" >$config_path/planet.tmp
@@ -79,10 +76,15 @@ if [ -f "$PLANET" ]; then
 			nvram commit
 		fi
 fi
-add_join $(nvram get zerotier_id)
 $PROG $args $config_path >/dev/null 2>&1 &
-rules
-
+while [ ! -f $config_path/zerotier-one.port ]; do
+		sleep 1
+done
+if [ -n "$zeroid" ]; then
+  $PROGCLI join $zeroid
+  #logger -t "【ZeroTier】" "join zerotier_id $zeroid ok!"
+  rules
+fi
 if [ -n "$moonid" ]; then
    $PROGCLI -D$config_path orbit $moonid $moonid
    logger -t "【ZeroTier】" "orbit moonid $moonid ok!"
@@ -96,10 +98,6 @@ if [ "$zeromoonip" = "1" ] || [ -n "$moonip" ]; then
    remove_moon
 fi
 zerotier_keep
-}
-
-add_join() {
-		touch $config_path/networks.d/$(nvram get zerotier_id).conf
 }
 
 rules() {
@@ -276,7 +274,7 @@ tag="$( curl -k --connect-timeout 20 -s https://api.github.com/repos/lmq8267/Zer
 [ -z "$tag" ] && tag="$(curl -k --silent "https://api.github.com/repos/lmq8267/ZeroTierOne/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')"
 if [ ! -s "$SVC_PATH" ] ; then
    rm -rf /etc/storage/zerotier-one/MD5.txt
-   logger -t "【ZeroTier】" "找不到$SVC_PATH,开始下载"
+   logger -t "【ZeroTier】" "找不到zerotiero-one,开始下载"
    if [ "$zerosize" -lt 2 ];then
       logger -t "【ZeroTier】" "您的设备/etc/storage空间剩余"$zerosize"M，不足2M，将下载安装包到内存安装"
       if [ ! -z "$tag" ] ; then
@@ -327,8 +325,20 @@ if [ ! -s "$SVC_PATH" ] ; then
    sleep 10
    zero_dl
 else
-   [ -f /tmp/zerotier-one/zerotier-one ] &&  chmod 777 /tmp/zerotier-one/zerotier-one && rm -rf /tmp/zerotier-one/zerotier-cli && rm -rf /tmp/zerotier-one/zerotier-idtool && ln -sf /tmp/zerotier-one/zerotier-one /tmp/zerotier-one/zerotier-cli && ln -sf /tmp/zerotier-one/zerotier-one /tmp/zerotier-one/zerotier-idtool
-   [ -f /etc/storage/zerotier-one/zerotier-one ] &&  chmod 777 /etc/storage/zerotier-one/zerotier-one && rm -rf /etc/storage/zerotier-one/zerotier-cli && rm -rf /etc/storage/zerotier-one/zerotier-idtool && ln -sf /etc/storage/zerotier-one/zerotier-one /etc/storage/zerotier-one/zerotier-cli && ln -sf /etc/storage/zerotier-one/zerotier-one /etc/storage/zerotier-one/zerotier-idtool
+   if [ -f /tmp/zerotier-one/zerotier-one ] ; then
+   chmod 777 /tmp/zerotier-one/zerotier-one 
+   rm -rf /tmp/zerotier-one/zerotier-cli 
+   rm -rf /tmp/zerotier-one/zerotier-idtool
+   ln -sf /tmp/zerotier-one/zerotier-one /tmp/zerotier-one/zerotier-cli 
+   ln -sf /tmp/zerotier-one/zerotier-one /tmp/zerotier-one/zerotier-idtool
+   fi
+   if [ -f /etc/storage/zerotier-one/zerotier-one ] ; then
+   chmod 777 /etc/storage/zerotier-one/zerotier-one
+   rm -rf /etc/storage/zerotier-one/zerotier-cli 
+   rm -rf /etc/storage/zerotier-one/zerotier-idtool 
+   ln -sf /etc/storage/zerotier-one/zerotier-one /etc/storage/zerotier-one/zerotier-cli 
+   ln -sf /etc/storage/zerotier-one/zerotier-one /etc/storage/zerotier-one/zerotier-idtool
+   fi
 fi
 if [ -f "$SVC_PATH" ] ; then
        zerotier_v=$($SVC_PATH -version | sed -n '1p')
