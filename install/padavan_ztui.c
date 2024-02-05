@@ -1013,7 +1013,7 @@ if (new_moon_ip_value1) {
    
    if (commandExecuted == 1) {
     // 保存更新的值
-   //system("nvram commit");
+   system("nvram commit");
    // 获取当前程序的路径
     char *programPath = argv[0];
     // 确保路径已经初始化
