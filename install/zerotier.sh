@@ -76,8 +76,8 @@ $PROG $args $config_path >/dev/null 2>&1 &
 while [ ! -f $config_path/zerotier-one.port ]; do
 		sleep 1
 done
-if [ -n "$zeroid" ]; then
-  $PROGCLI join $zeroid
+if [ -n "$cfg" ]; then
+  $PROGCLI join $cfg
   #logger -t "【ZeroTier】" "join zerotier_id $zeroid ok!"
   rules
 fi
