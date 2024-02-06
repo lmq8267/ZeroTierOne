@@ -5,7 +5,7 @@ PROG=/opt/bin/zerotier-one
 PROGCLI=/opt/bin/zerotier-cli
 PROGIDT=/opt/bin/zerotier-idtool
 config_path="/etc/storage/zerotier-one"
-PLANET="/etc/storage/zerotier-one/planet"
+PLANET="/etc/storage/planet"
 zeroid="$(nvram get zerotier_id)"
 zerotier_renum=`nvram get zerotier_renum`
 zerotier_renum=${zerotier_renum:-"0"}
@@ -284,11 +284,7 @@ if [ -n "$planet"]; then
 fi
 if [ -f "$PLANET" ]; then
 		if [ ! -s "$PLANET" ]; then
-			echo "自定义planet文件为空,删除..."
-			rm -f $config_path/planet
-			rm -f $PLANET
-			nvram set zerotier_planet=""
-			nvram commit
+			echo "自定义planet文件为空"
 		else
 			logger -t "【ZeroTier】" "找到自定义planet文件,开始创建..."
 			planet="$(base64 $PLANET)"
@@ -300,11 +296,18 @@ if [ -f "$PLANET" ]; then
 fi
 add_join $(nvram get zerotier_id)
 $PROG $args $config_path >/dev/null 2>&1 &
-rules
+while [ ! -f $config_path/zerotier-one.port ]; do
+		sleep 1
+done
 
 if [ -n "$moonid" ]; then
    $PROGCLI -D$config_path orbit $moonid $moonid
    logger -t "【ZeroTier】" "orbit moonid $moonid ok!"
+fi
+if [ -n "$cfg" ]; then
+  $PROGCLI join $cfg
+  #logger -t "【ZeroTier】" "join zerotier_id $zeroid ok!"
+  rules
 fi
 zeromoonip="$(nvram get zeromoonwan)"
 moonip="$(nvram get zerotiermoon_ip)"
@@ -318,10 +321,6 @@ zerotier_get_status
 eval "$scriptfilepath keep &"
 zero_ping &
 exit 0
-}
-
-add_join() {
-		touch $config_path/networks.d/$(nvram get zerotier_id).conf
 }
 
 rules() {
