@@ -7,7 +7,7 @@ PROGCLI=/etc/storage/zerotier-one/zerotier-cli
 PROGIDT=/etc/storage/zerotier-one/zerotier-idtool
 [ ! -f "$PROGIDT" ] && PROGIDT=/tmp/zerotier-one/zerotier-idtool
 config_path="/etc/storage/zerotier-one"
-PLANET="/etc/storage/zerotier-one/planet"
+PLANET="/etc/storage/planet"
 zeroid="$(nvram get zerotier_id)"
 D="/etc/storage/cron/crontabs"
 F="$D/`nvram get http_username`"
@@ -62,11 +62,7 @@ if [ -n "$planet"]; then
 fi
 if [ -f "$PLANET" ]; then
 		if [ ! -s "$PLANET" ]; then
-			echo "自定义planet文件为空,删除..."
-			rm -f $config_path/planet
-			rm -f $PLANET
-			nvram set zerotier_planet=""
-			nvram commit
+			echo "自定义planet文件为空"
 		else
 			logger -t "【ZeroTier】" "找到自定义planet文件,开始创建..."
 			planet="$(base64 $PLANET)"
