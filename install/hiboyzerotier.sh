@@ -294,12 +294,12 @@ if [ -f "$PLANET" ]; then
 			nvram commit
 		fi
 fi
-add_join $(nvram get zerotier_id)
+
 $PROG $args $config_path >/dev/null 2>&1 &
 while [ ! -f $config_path/zerotier-one.port ]; do
 		sleep 1
 done
-
+$PROGCLI join $(nvram get zerotier_id)
 if [ -n "$moonid" ]; then
    $PROGCLI -D$config_path orbit $moonid $moonid
    logger -t "【ZeroTier】" "orbit moonid $moonid ok!"
