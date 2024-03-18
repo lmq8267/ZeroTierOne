@@ -16,6 +16,7 @@ jobs:
     run: |
       ver=`curl https://api.github.com/repos/zerotier/ZeroTierOne/releases/latest | jq -r '.tag_name'`
       cver=`curl https://api.github.com/repos/lmq8267/ZeroTierOne/releases/latest | jq -r '.tag_name'`
+      echo "最新版本${ver} 当前版本${cver}"
       echo "ver=${ver}" >> $GITHUB_OUTPUT
       echo "cver=${cver}" >> $GITHUB_OUTPUT
  build:
