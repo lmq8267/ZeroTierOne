@@ -35,12 +35,15 @@ jobs:
           - TARGET: arm7l-opt
             OS: ubuntu-latest
             GCC: arm-linux-musleabi
+          - TARGET: arm7l-etc
+            OS: ubuntu-latest
+            GCC: arm-linux-musleabi
           - TARGET: mipsel
             OS: ubuntu-latest
-            GCC: mipsel-buildroot-linux-uclibc
+            GCC: mipsel-linux-musl
           - TARGET: mipsel-opt
             OS: ubuntu-latest
-            GCC: mipsel-buildroot-linux-uclibc
+            GCC: mipsel-linux-musl
     runs-on: ${{ matrix.OS }}
     env:
       TARGET: ${{ matrix.TARGET }}
@@ -50,34 +53,41 @@ jobs:
       - uses: actions/checkout@v3
       - name: 下载编译工具链
         run: |
-          echo -e "\n\033[42;31;5;1m 开始克隆${{ steps.getversion.outputs.ver }}源码... \n\033[0m"
-          git clone https://github.com/zerotier/ZeroTierOne -b ${{ steps.getversion.outputs.ver }} /opt/zt
-          mkdir -p /opt/musl_gcc 
-          if [[ $TARGET == mipsel ]] || [[ $TARGET == mipsel-opt ]]; then
-          echo -e "\n\033[42;31;5;1m 开始下载musl工具链.. \n\033[0m"
-          wget -q -c https://github.com/lmq8267/vnt-cli/releases/download/Armada370-ToolChain/buildroot-2023.02.5-mipsel-uclibc.zip -P /opt/musl_gcc/
-          echo -e "\n\033[42;31;5;1m 开始解压musl工具链.. \n\033[0m"
-          unzip -q  /opt/musl_gcc/buildroot-2023.02.5-mipsel-uclibc.zip -d /opt/musl_gcc/
-          echo -e "\n\033[42;31;5;1m 查看musl-gcc信息 \n\033[0m"
-          sudo chmod -R +x /opt/musl_gcc 
-          /opt/musl_gcc/host/bin/mipsel-buildroot-linux-uclibc-gcc -v
-          else
-          MUSL_URI=arm-linux-musleabi-cross
+          echo -e "\n\033[42;31;5;1m 开始克隆${{ needs.check.outputs.ver }}源码... \n\033[0m"
+          git clone https://github.com/zerotier/ZeroTierOne -b ${{ needs.check.outputs.ver }} /opt/zt
+          case $TARGET in 
+              mipsel)
+                MUSL_URI=mipsel-linux-musl-cross
+                ;;
+              mipsel-opt)
+                MUSL_URI=mipsel-linux-musl-cross
+                ;;
+              arm7l-koolshare)
+                MUSL_URI=arm-linux-musleabi-cross
+                ;;
+              arm7l-swrt)
+                MUSL_URI=arm-linux-musleabi-cross
+                ;;
+              arm7l-opt)
+                MUSL_URI=arm-linux-musleabi-cross
+                ;;
+              arm7l-etc)
+                MUSL_URI=arm-linux-musleabi-cross
+                ;;
+            esac
           echo "MUSL_URI=${MUSL_URI}" >> $GITHUB_ENV
+          mkdir -p /opt/musl_gcc 
           echo -e "\n\033[42;31;5;1m 开始下载musl工具链.. \n\033[0m"
           wget -q -c https://musl.cc/$MUSL_URI.tgz -P /opt/musl_gcc/
           echo -e "\n\033[42;31;5;1m 开始解压musl工具链.. \n\033[0m"
           tar -xf /opt/musl_gcc/$MUSL_URI.tgz -C /opt/musl_gcc/
           echo -e "\n\033[42;31;5;1m 查看musl-gcc信息 \n\033[0m"
           /opt/musl_gcc/$MUSL_URI/bin/${{ matrix.GCC }}-gcc -v
-          fi
       - 
         name: 编译zerotier
         shell: bash
         run: |
           cd /opt/zt
-          sudo apt install qemu-user
-          sudo apt install qemu-mipsel-static
           echo -e "\n\033[42;31;5;1m 修改zerotier源码 \n\033[0m"
           sed -i 's|-fPIC -fPIE|-fPIC -fPIE -static|g' ./make-linux.mk
           sed -i '/include objects.mk/i    LDLIBS+=-latomic' ./make-linux.mk
@@ -97,6 +107,10 @@ jobs:
           echo -e "\n\033[42;31;5;1m 修改arm7l架构Entware密钥存储路径 \n\033[0m"
           sed -i 's|/var/lib/zerotier-one|/opt/var/lib/zerotier-one|g' ./osdep/OSUtils.cpp
           fi
+          if [[ $TARGET == arm7l-etc ]] ; then
+          echo -e "\n\033[42;31;5;1m 修改arm7l架构Entware密钥存储路径 \n\033[0m"
+          sed -i 's|/var/lib/zerotier-one|/etc/zerotier-one|g' ./osdep/OSUtils.cpp
+          fi
           if [[ $TARGET == arm7l-koolshare ]] ; then
           echo -e "\n\033[42;31;5;1m 修改arm7l架构koolshare密钥存储路径 \n\033[0m"
           sed -i 's|/var/lib/zerotier-one|/koolshare/configs/zerotier-one|g' ./osdep/OSUtils.cpp
@@ -109,25 +123,9 @@ jobs:
           if [ $(cat ./osdep/LinuxEthernetTap.cpp | grep -c "ioctl(sock,SIOCSIFHWADDR,(void") -eq 2 ]; then
           MAC="$(grep -n "ioctl(sock,SIOCSIFHWADDR,(void" ./osdep/LinuxEthernetTap.cpp | head -2 | tail -1 | awk '{print $1}' | tr -d ": ")" && echo -e "\n\033[42;31;5;1m 删除第 ${MAC} 行 \n\033[0m" &&  sed -i "$((MAC)),+5d" ./osdep/LinuxEthernetTap.cpp && cat ./osdep/LinuxEthernetTap.cpp | grep MAC
           fi
-          #sed -i 's|fprintf(stderr, "Error binding control plane to 0.0.0.0:%d\n", _primaryPort);|char command[1024];\n sprintf(command, "logger -t '\''【ZeroTier】'\'' '\''Error IPV4 binding control plane to 0.0.0.0:%d'\'' ", _primaryPort);\n system(command);|g' ./service/OneService.cpp
-          #sed -i 's|fprintf(stderr, "Error binding control plane to [::]:%d\n", _primaryPort);|char command[1024];\n sprintf(command, "logger -t '\''【ZeroTier】'\'' '\''Error IPV6 binding control plane to [::]:%d'\'' ", _primaryPort);\n system(command);|g' ./service/OneService.cpp
-          #sed -i 's|fprintf(stderr, "ERROR: Could not bind control plane. Exiting...\n");|char command[1024];\n sprintf(command, "logger -t '\''【ZeroTier】'\'' '\''ERROR: IPV4和IPV6 Could not bind control plane. Exiting...'\'' ", _primaryPort);\n system(command);|g' ./service/OneService.cpp
-          #sed -i 's|fprintf(stderr, "Starting V6 Control Plane...\n");|char command[1024];\n sprintf(command, "logger -t '\''ZeroTier'\'' '\''now ipv6'\'' ");\n system(command);|g' ./service/OneService.cpp
-          
           
           echo -e "\n\033[42;31;5;1m 设置编译环境变量 \n\033[0m"
           sudo timedatectl set-timezone "Asia/Shanghai"
-          if [[ $TARGET == mipsel ]] || [[ $TARGET == mipsel-opt ]] ; then
-          export PATH=$PATH:/opt/musl_gcc/host/bin
-          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/musl_gcc/host/lib
-          export CC=mipsel-buildroot-linux-uclibc-gcc
-          export CXX=mipsel-buildroot-linux-uclibc-g++
-          export AR=mipsel-buildroot-linux-uclibc-ar
-          export LD=mipsel-buildroot-linux-uclibc-ld
-          export RANLIB=mipsel-buildroot-linux-uclibc-ranlib
-          export STRIP=mipsel-buildroot-linux-uclibc-strip
-          export CFLAGS="-I /opt/musl_gcc/host/include -L /opt/musl_gcc/host/lib -Wl,--gc-sections -Os -ffunction-sections -fdata-sections -D_GNU_SOURCE -D_BSD_SOURCE -fPIE"
-          else
           export PATH=$PATH:/opt/musl_gcc/${{ env.MUSL_URI }}/bin
           export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/musl_gcc/${{ env.MUSL_URI }}/${{ matrix.GCC }}/lib
           export CC=${{ matrix.GCC }}-gcc
@@ -137,7 +135,6 @@ jobs:
           export RANLIB=${{ matrix.GCC }}-ranlib
           export STRIP=${{ matrix.GCC }}-strip
           export CFLAGS="-I /opt/musl_gcc/${{ env.MUSL_URI }}/${{ matrix.GCC }}/include -L /opt/musl_gcc/${{ env.MUSL_URI }}/${{ matrix.GCC }}/lib -Wl,--gc-sections -Os -ffunction-sections -fdata-sections -D_GNU_SOURCE -D_BSD_SOURCE -fPIE"
-          fi
           export CXXFLAGS="$CFLAGS"
           export TARGET_CFLAGS=" -DNDEBUG -DBOOST_NO_FENV_H -DBOOST_DISABLE_ASSERTS"
           echo -e "\n\033[42;31;5;1m 开始编译... \n\033[0m"
@@ -157,27 +154,16 @@ jobs:
           chmod 777 /opt/upx-4.1.0-amd64_linux/upx
           cd /opt/zt
           echo -e "\n\033[42;31;5;1m 查看二进制程序信息 \n\033[0m"
-          if [[ $TARGET == mipsel ]] || [[ $TARGET == mipsel-opt ]] ; then
-          qemu-mipsel-static zerotier-one -h
-          qemu-mipsel-static zerotier-one -v
-          else
-          qemu-arm zerotier-one -h
-          qemu-arm zerotier-one -v
-          fi
           file zerotier-one
           strings zerotier-one | grep /zerotier-one
           echo -e "\n\033[42;31;5;1m 查看原始体积 \n\033[0m"
           du -k zerotier-one
           echo -e "\n\033[42;31;5;1m 开始剥离... \n\033[0m"
-          if [[ $TARGET == mipsel ]] || [[ $TARGET == mipsel-opt ]] ; then
-          /opt/musl_gcc/host/bin/mipsel-buildroot-linux-uclibc-strip zerotier-one
-          else
           /opt/musl_gcc/${{ env.MUSL_URI }}/bin/${{ matrix.GCC }}-strip zerotier-one
-          fi
           echo -e "\n\033[42;31;5;1m 查看剥离后的体积 \n\033[0m"
           du -k zerotier-one
           echo -e "\n\033[42;31;5;1m 开始upx压缩... \n\033[0m"
-          if [[ $TARGET == mipsel ]] ; then
+          if [[ $TARGET == mipsel ]] || [[ $TARGET == mipsel-opt ]] ; then
           /opt/upx-3.95-amd64_linux/upx --lzma --best zerotier-one
           else
           /opt/upx-4.1.0-amd64_linux/upx --lzma --best zerotier-one
@@ -220,7 +206,7 @@ jobs:
             fi 
             fi
             mkdir -p /opt/ipk
-            wget -q -c https://github.com/lmq8267/ZeroTierOne/releases/download/1.12.2/zerotier_1.12.2-1_mipsel-3.4.ipk -P /opt/ipk/
+            wget -q -c https://github.com/lmq8267/ZeroTierOne/releases/download/1.12.1/zerotier_1.12.2-1_mipsel-3.4.ipk -P /opt/ipk/
             echo -e "\n\033[42;31;5;1m 开始打包Entware软件中心IPK安装包.. \n\033[0m"
             tar xzf /opt/ipk/zerotier_1.12.2-1_mipsel-3.4.ipk -C /opt/ipk/
             tar -xf /opt/ipk/data.tar.gz -C /opt/ipk/
@@ -239,7 +225,7 @@ jobs:
          cd /opt/bin
          tar czvf zerotier-mipsel-opt.tar.gz zerotier-one
          mkdir -p /opt/ipk
-            wget -q -c https://github.com/lmq8267/ZeroTierOne/releases/download/1.12.2/zerotier_1.12.2-1_mipsel-3.4.ipk -P /opt/ipk/
+            wget -q -c https://github.com/lmq8267/ZeroTierOne/releases/download/1.12.1/zerotier_1.12.2-1_mipsel-3.4.ipk -P /opt/ipk/
             echo -e "\n\033[42;31;5;1m 开始打包Entware软件中心IPK安装包.. \n\033[0m"
             tar xzf /opt/ipk/zerotier_1.12.2-1_mipsel-3.4.ipk -C /opt/ipk/
             tar -xf /opt/ipk/data.tar.gz -C /opt/ipk/
@@ -257,6 +243,15 @@ jobs:
          ln -sf /opt/bin/zerotier-one/zerotier-one /opt/bin/zerotier-one/zerotier-idtool
          cd /opt/bin
          tar czvf zerotier-arm7l-opt.tar.gz zerotier-one
+         fi
+         if [[ $TARGET == arm7l-etc ]] ;then
+         mkdir -p /opt/bin/zerotier-one
+         echo -e "\n\033[42;31;5;1m 打包arm7l-etc-zerotier \n\033[0m"
+         cp /opt/zt/zerotier-one /opt/bin/zerotier-one/zerotier-one
+         ln -sf /opt/bin/zerotier-one/zerotier-one /opt/bin/zerotier-one/zerotier-cli
+         ln -sf /opt/bin/zerotier-one/zerotier-one /opt/bin/zerotier-one/zerotier-idtool
+         cd /opt/bin
+         tar czvf zerotier-arm7l-etc.tar.gz zerotier-one
          fi
       - 
         name: 打包梅林离线安装包
@@ -331,6 +326,7 @@ jobs:
            - **zerotier-one**  mipsel架构padavan固件单独二进制文件 密钥路径 **/etc/storage/zerotier-one**
            - **MD5.txt**  为 **zerotier-one** 单独二进制文件的MD5校验值
            - **zerotier-arm7l-opt.tar.gz**   arm7l架构密钥路径 **/opt/var/lib/zerotier-one**
+           - **zerotier-arm7l-etc.tar.gz**   arm7l架构密钥路径 **/etc/zerotier-one**
            - **zerotier-mipsel-opt.tar.gz**   mipsel架构密钥路径 **/opt/var/lib/zerotier-one**
            - **zerotier_${{ needs.check.outputs.ver }}-1_mipsel-3.4.ipk**   Entware软件包密钥路径 **/etc/storage/zerotier-one**
            - **zerotier-opt_${{ needs.check.outputs.ver }}-1_mipsel-3.4.ipk**   Entware软件包密钥路径 **/opt/var/lib/zerotier-one**
@@ -338,10 +334,11 @@ jobs:
            **arm7l架构[koolshare](https://github.com/lmq8267/ZeroTierOne/releases/tag/koolshare)的梅林固件384/386软件中心的离线安装包**
            **arm7l架构[P大的swrt](https://github.com/lmq8267/ZeroTierOne/releases/tag/swrt)的梅林固件384/386软件中心的离线安装包**
            **[官方更新说明](https://github.com/zerotier/ZeroTierOne/releases)**
-          tag_name: ${{ steps.getversion.outputs.ver }}
+          tag_name: ${{ needs.check.outputs.ver }}
           files: |
             /opt/bin/zerotier.tar.gz
             /opt/bin/zerotier-arm7l-opt.tar.gz
+            /opt/bin/zerotier-arm7l-etc.tar.gz
             /opt/ipk/zerotier-opt_${{ needs.check.outputs.ver }}-1_mipsel-3.4.ipk
             /opt/bin/zerotier-mipsel-opt.tar.gz
             /opt/bin/tarMD5.txt
