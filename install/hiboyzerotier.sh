@@ -334,7 +334,24 @@ rules() {
         [ -n "$ip66" ] && logger -t "【ZeroTier】" ""$zt0"_ipv6:$ip66"
         [ -n "$ip44" ] && logger -t "【ZeroTier】" ""$zt0"_ipv4:$ip44"
         [ -z "$ip44" ] && logger -t "【ZeroTier】" "未获取到zerotier ip请前往官网检查是否勾选此路由加入网络并分配IP"
-	zerotier-cli info 
+	count=0
+        while [ $count -lt 5 ]
+        do
+       ztstatus=$(zerotier-cli info | awk '{print $5}')
+       if [ "$ztstatus" = "OFFLINE" ]; then
+        sleep 2
+        elif [ "$ztstatus" = "ONLINE" ]; then
+        ztid=$(zerotier-cli info | awk '{print $3}')
+        logger -t "【ZeroTier】" "若是官网没有此设备，请手动绑定此设备ID  $ztid "
+	echo "若是官网没有此设备，请手动绑定此设备ID  $ztid "
+        fi
+        count=$(expr $count + 1)
+        done
+	if [ "$(zerotier-cli info | awk '{print $5}')" = "OFFLINE" ] ; then
+          echo "你的网络无法连接到zerotier服务器，请检查网络，程序退出"
+	  logger -t "【ZeroTier】" "你的网络无法连接到zerotier服务器，请检查网络，程序退出"
+          exit 1
+        fi
 	del_rules
 	iptables -I INPUT -i $zt0 -j ACCEPT
 	iptables -I FORWARD -i $zt0 -o $zt0 -j ACCEPT
