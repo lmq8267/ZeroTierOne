@@ -338,8 +338,8 @@ rules() {
         while [ $count -lt 5 ]
         do
        ztstatus=$(zerotier-cli info | awk '{print $5}')
-       if [ "$ztstatus" = "offline" ]; then
-        sleep 2
+       if [ "$ztstatus" = "OFFLINE" ]; then
+        sleep 3
         elif [ "$ztstatus" = "ONLINE" ]; then
         ztid=$(zerotier-cli info | awk '{print $3}')
         logger -t "【ZeroTier】" "若是官网没有此设备，请手动绑定此设备ID  $ztid "
@@ -348,7 +348,7 @@ rules() {
         fi
         count=$(expr $count + 1)
         done
-	if [ "$(zerotier-cli info | awk '{print $5}')" = "offline" ] ; then
+	if [ "$(zerotier-cli info | awk '{print $5}')" = "OFFLINE" ] ; then
           echo "你的网络无法连接到zerotier服务器，请检查网络，程序退出"
 	  logger -t "【ZeroTier】" "你的网络无法连接到zerotier服务器，请检查网络，程序退出"
           exit 1
