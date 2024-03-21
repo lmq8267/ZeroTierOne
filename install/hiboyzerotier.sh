@@ -343,7 +343,8 @@ rules() {
         elif [ "$ztstatus" = "ONLINE" ]; then
         ztid=$(zerotier-cli info | awk '{print $3}')
         logger -t "【ZeroTier】" "若是官网没有此设备，请手动绑定此设备ID  $ztid "
-	echo "若是官网没有此设备，请手动绑定此设备ID  $ztid "
+	echo "若是官网没有此设备，请手动绑定此设备Node Id  $ztid "
+        break
         fi
         count=$(expr $count + 1)
         done
