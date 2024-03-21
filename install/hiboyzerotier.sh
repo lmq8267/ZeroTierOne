@@ -168,7 +168,7 @@ if [ ! -s "$SVC_PATH" ] ; then
        rm -rf /etc/storage/zerotier-one/MD5.txt
        if [ ! -z "$tag" ] ; then
            logger -t "【ZeroTier】" "获取到最新版本zerotier_v$tag,开始下载"
-           wgetcurl.sh "/etc/storage/zerotier-one/MD5.txt" "https://github.com/lmq8267/ZeroTierOne/releases/download/$tag/MD5.txt" "https://hub.gitmirror.com/https://github.com/lmq8267/ZeroTierOne/releases/download/$tag/MD5.txt"
+           wgetcurl.sh "/etc/storage/zerotier-one/MD5.txt" "https://github.com/lmq8267/ZeroTierOne/releases/download/$tag/tarMD5.txt" "https://hub.gitmirror.com/https://github.com/lmq8267/ZeroTierOne/releases/download/$tag/tarMD5.txt"
            if [ "$zerosize" -lt 2 ];then
                logger -t "【ZeroTier】" "您的设备/etc/storage空间剩余"$zerosize"M，不足2M，将下载安装包到内存安装"
                [ "$zerosize" -gt 1 ] && logger -t "【ZeroTier】" "可尝试手动上传zerotier.tar.gz和MD5.txt到内部存储/etc/storage/zerotier-one/目录里"
@@ -181,7 +181,7 @@ if [ ! -s "$SVC_PATH" ] ; then
               logger -t "【ZeroTier】" "最新版本获取失败，开始下载备用程序zerotier_v1.10.6"
               logger -t "【ZeroTier】" "若出现反复更新又下载，请关闭自动更新"
 	      rm -rf /etc/storage/zerotier-one/MD5.txt
-              wgetcurl.sh "/etc/storage/zerotier-one/MD5.txt" "https://github.com/lmq8267/ZeroTierOne/releases/download/1.10.6/MD5.txt" "https://hub.gitmirror.com/https://github.com/lmq8267/ZeroTierOne/releases/download/1.10.6/tarMD5.txt"
+              wgetcurl.sh "/etc/storage/zerotier-one/MD5.txt" "https://github.com/lmq8267/ZeroTierOne/releases/download/1.10.6/tarMD5.txt" "https://hub.gitmirror.com/https://github.com/lmq8267/ZeroTierOne/releases/download/1.10.6/tarMD5.txt"
               if [ "$zerosize" -lt 2 ];then
                logger -t "【ZeroTier】" "您的设备/etc/storage空间剩余"$zerosize"M，不足2M，将下载安装包到内存安装"
                [ "$zerosize" -gt 1 ] && logger -t "【ZeroTier】" "可尝试手动上传zerotier.tar.gz和MD5.txt到内部存储/etc/storage/zerotier-one/目录里"
@@ -214,8 +214,8 @@ if [ ! -s "$SVC_PATH" ] ; then
      fi
 fi
 chmod 777 "$PROG"
-[ -f "$PROGCLI" ] && ln -sf "$PROG" "$PROGCLI"
-[ -f "$PROGIDT" ] && ln -sf "$PROG" "$PROGIDT"
+[ ! -f "$PROGCLI" ] && ln -sf "$PROG" "$PROGCLI"
+[ ! -f "$PROGIDT" ] && ln -sf "$PROG" "$PROGIDT"
 chmod 777 "$PROGIDT"
 chmod 777 "$PROGCLI"
  if [ -s "$SVC_PATH" ] && [ -f "$PROGCLI" ] && [ -f "$PROGIDT" ] ; then
@@ -250,7 +250,7 @@ cfg="$(nvram get zerotier_id)"
 echo $cfg
 port=""
 args=""
-secret="$(cat /etc/storage/zerotier-one/identity.secret)"
+[ -f /etc/storage/zerotier-one/identity.secret ] && secret="$(cat /etc/storage/zerotier-one/identity.secret)"
 moonid="$(nvram get zerotier_moonid)"
 planet="$(nvram get zerotier_planet)"
 [ ! -s "/etc/storage/zerotier-one/identity.secret" ] && secret="$(nvram get zerotier_secret)"
@@ -334,6 +334,7 @@ rules() {
         [ -n "$ip66" ] && logger -t "【ZeroTier】" ""$zt0"_ipv6:$ip66"
         [ -n "$ip44" ] && logger -t "【ZeroTier】" ""$zt0"_ipv4:$ip44"
         [ -z "$ip44" ] && logger -t "【ZeroTier】" "未获取到zerotier ip请前往官网检查是否勾选此路由加入网络并分配IP"
+	zerotier-cli info 
 	del_rules
 	iptables -I INPUT -i $zt0 -j ACCEPT
 	iptables -I FORWARD -i $zt0 -o $zt0 -j ACCEPT
