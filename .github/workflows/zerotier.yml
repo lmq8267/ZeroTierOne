@@ -253,6 +253,15 @@ jobs:
          cd /opt/bin
          tar czvf zerotier-arm7l-etc.tar.gz zerotier-one
          fi
+         if [[ $TARGET == arm7l-swrt ]] ;then
+         mkdir -p /opt/bin/zerotier-one
+         echo -e "\n\033[42;31;5;1m 打包arm7l-swrt-zerotier \n\033[0m"
+         cp /opt/zt/zerotier-one /opt/bin/zerotier-one/zerotier-one
+         ln -sf /opt/bin/zerotier-one/zerotier-one /opt/bin/zerotier-one/zerotier-cli
+         ln -sf /opt/bin/zerotier-one/zerotier-one /opt/bin/zerotier-one/zerotier-idtool
+         cd /opt/bin
+         tar czvf zerotier-arm7l-swrt.tar.gz zerotier-one
+         fi
       - 
         name: 打包梅林离线安装包
         shell: bash
@@ -269,49 +278,50 @@ jobs:
          cat /opt/koolshare/zerotier/webs/Module_zerotier.asp | grep ZeroTier
          cat /opt/koolshare/zerotier/install.sh | grep zerotier-one_
          cd /opt/koolshare
-         tar czvf zerotier-${{ needs.check.outputs.ver }}.tar.gz zerotier
+         tar czvf zerotier-arm7l-koolshare.tar.gz zerotier
          fi
 
-         if [[ $TARGET == arm7l-swrt ]] ; then
-         mkdir -p /opt/swrt
-         wget -q -c https://github.com/lmq8267/ZeroTierOne/releases/download/swrt/zerotier1.12.2.tar.gz -P /opt/swrt/
-         echo -e "\n\033[42;31;5;1m 开始打包swrt版.. \n\033[0m"
-         tar -xf /opt/swrt/zerotier1.12.2.tar.gz -C /opt/swrt/
-         rm -rf /opt/swrt/zerotier/bin/zerotier-one
-         cp -rf /opt/zt/zerotier-one /opt/swrt/zerotier/bin/zerotier-one
-         sed -i 's|version=1.12.2|version=${{ needs.check.outputs.ver }}|g' /opt/swrt/zerotier/install.sh
-         cat /opt/swrt/zerotier/install.sh | grep version=
-         cd /opt/swrt
-         tar czvf zerotier-${{ needs.check.outputs.ver }}.tar.gz zerotier
-         fi
-      - 
-        name: 发布prerelease
-        uses: softprops/action-gh-release@v1
-        with:
-          token: ${{ secrets.c8 }}
-          body: |
-           > ### 编译时间：${{ env.build_time }}
-           - **密钥存储位置已改为：/jffs/softcenter/etc/zerotier-one**
-           - **这是适用于arm7l架构P大的swrt梅林固件软件中心的离线安装包**
+         #if [[ $TARGET == arm7l-swrt ]] ; then
+         #mkdir -p /opt/swrt
+         #wget -q -c https://github.com/lmq8267/ZeroTierOne/releases/download/swrt/zerotier1.12.2.tar.gz -P /opt/swrt/
+         #echo -e "\n\033[42;31;5;1m 开始打包swrt版.. \n\033[0m"
+         #tar -xf /opt/swrt/zerotier1.12.2.tar.gz -C /opt/swrt/
+         #rm -rf /opt/swrt/zerotier/bin/zerotier-one
+         #cp -rf /opt/zt/zerotier-one /opt/swrt/zerotier/bin/zerotier-one
+         #sed -i 's|version=1.12.2|version=${{ needs.check.outputs.ver }}|g' /opt/swrt/zerotier/install.sh
+         #cat /opt/swrt/zerotier/install.sh | grep version=
+         #cd /opt/swrt
+         #tar czvf zerotier-${{ needs.check.outputs.ver }}.tar.gz zerotier
+         #fi
+      #- 
+        #name: 发布prerelease
+        #uses: softprops/action-gh-release@v1
+        #with:
+          #token: ${{ secrets.c8 }}
+          #body: |
+           #> ### 编译时间：${{ env.build_time }}
+           #- **密钥存储位置已改为：/jffs/softcenter/etc/zerotier-one**
+           #- **这是适用于arm7l架构P大的swrt梅林固件软件中心的zerotier二进制文件**
+           #- **下载直接解压出zerotier-one 替换原有的zerotier-one即可**
 
-           **[官方更新说明](https://github.com/zerotier/ZeroTierOne/releases)**
-          prerelease: true
-          tag_name: swrt
-          files: /opt/swrt/zerotier-${{ needs.check.outputs.ver }}.tar.gz
-      - 
-        name: 发布prerelease
-        uses: softprops/action-gh-release@v1
-        with:
-          token: ${{ secrets.c8 }}
-          body: |
-           > ### 编译时间：${{ env.build_time }}
-           - **密钥存储位置已改为：/koolshare/configs/zerotier-one**
-           - **这是适用于arm7l架构koolshare的梅林固件384/386软件中心的离线安装包**
+           #**[官方更新说明](https://github.com/zerotier/ZeroTierOne/releases)**
+          #prerelease: true
+          #tag_name: swrt
+          #files: /opt/bin/zerotier-arm7l-swrt.tar.gz
+      #- 
+        #name: 发布prerelease
+        #uses: softprops/action-gh-release@v1
+        #with:
+          #token: ${{ secrets.c8 }}
+          #body: |
+           #> ### 编译时间：${{ env.build_time }}
+           #- **密钥存储位置已改为：/koolshare/configs/zerotier-one**
+           #- **这是适用于arm7l架构koolshare的梅林固件384/386软件中心的离线安装包**
 
-           **[官方更新说明](https://github.com/zerotier/ZeroTierOne/releases)**
-          prerelease: true
-          tag_name: koolshare
-          files: /opt/koolshare/zerotier-${{ needs.check.outputs.ver }}.tar.gz
+           #**[官方更新说明](https://github.com/zerotier/ZeroTierOne/releases)**
+          #prerelease: true
+          #tag_name: koolshare
+          #files: /opt/koolshare/zerotier-${{ needs.check.outputs.ver }}.tar.gz
       - 
         name: 发布release
         uses: softprops/action-gh-release@v1
@@ -328,17 +338,19 @@ jobs:
            - **zerotier-arm7l-opt.tar.gz**   arm7l架构密钥路径 **/opt/var/lib/zerotier-one**
            - **zerotier-arm7l-etc.tar.gz**   arm7l架构密钥路径 **/etc/zerotier-one**
            - **zerotier-mipsel-opt.tar.gz**   mipsel架构密钥路径 **/opt/var/lib/zerotier-one**
+           - **zerotier-mipsel-swrt.tar.gz**   arm7l架构P大的swrt的梅林固件密钥路径 **/jffs/softcenter/etc/zerotier-one**
+           - **zerotier-arm7l-koolshare.tar.gz**  arm7l架构koolshare的梅林固件384/386软件中心的离线安装包 **/koolshare/configs/zerotier-one**
            - **zerotier_${{ needs.check.outputs.ver }}-1_mipsel-3.4.ipk**   Entware软件包密钥路径 **/etc/storage/zerotier-one**
            - **zerotier-opt_${{ needs.check.outputs.ver }}-1_mipsel-3.4.ipk**   Entware软件包密钥路径 **/opt/var/lib/zerotier-one**
 
-           **arm7l架构[koolshare](https://github.com/lmq8267/ZeroTierOne/releases/tag/koolshare)的梅林固件384/386软件中心的离线安装包**
-           **arm7l架构[P大的swrt](https://github.com/lmq8267/ZeroTierOne/releases/tag/swrt)的梅林固件384/386软件中心的离线安装包**
            **[官方更新说明](https://github.com/zerotier/ZeroTierOne/releases)**
           tag_name: ${{ needs.check.outputs.ver }}
           files: |
             /opt/bin/zerotier.tar.gz
             /opt/bin/zerotier-arm7l-opt.tar.gz
             /opt/bin/zerotier-arm7l-etc.tar.gz
+            /opt/bin/zerotier-arm7l-swrt.tar.gz
+            /opt/koolshare/zerotier-arm7l-koolshare.tar.gz
             /opt/ipk/zerotier-opt_${{ needs.check.outputs.ver }}-1_mipsel-3.4.ipk
             /opt/bin/zerotier-mipsel-opt.tar.gz
             /opt/bin/tarMD5.txt
