@@ -338,7 +338,7 @@ jobs:
            - **zerotier-arm7l-opt.tar.gz**   arm7l架构密钥路径 **/opt/var/lib/zerotier-one**
            - **zerotier-arm7l-etc.tar.gz**   arm7l架构密钥路径 **/etc/zerotier-one**
            - **zerotier-mipsel-opt.tar.gz**   mipsel架构密钥路径 **/opt/var/lib/zerotier-one**
-           - **zerotier-mipsel-swrt.tar.gz**   arm7l架构P大的swrt的梅林固件密钥路径 **/jffs/softcenter/etc/zerotier-one**
+           - **zerotier-arm7l-swrt.tar.gz**   arm7l架构P大的swrt的梅林固件密钥路径 **/jffs/softcenter/etc/zerotier-one**
            - **zerotier-arm7l-koolshare.tar.gz**  arm7l架构koolshare的梅林固件384/386软件中心的离线安装包 **/koolshare/configs/zerotier-one**
            - **zerotier_${{ needs.check.outputs.ver }}-1_mipsel-3.4.ipk**   Entware软件包密钥路径 **/etc/storage/zerotier-one**
            - **zerotier-opt_${{ needs.check.outputs.ver }}-1_mipsel-3.4.ipk**   Entware软件包密钥路径 **/opt/var/lib/zerotier-one**
