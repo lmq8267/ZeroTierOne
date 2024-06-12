@@ -40,10 +40,10 @@ jobs:
             GCC: arm-linux-musleabi
           - TARGET: mipsel
             OS: ubuntu-latest
-            GCC: mipsel-linux-musl
+            GCC: mipsel-linux-muslsf
           - TARGET: mipsel-opt
             OS: ubuntu-latest
-            GCC: mipsel-linux-musl
+            GCC: mipsel-linux-muslsf
     runs-on: ${{ matrix.OS }}
     env:
       TARGET: ${{ matrix.TARGET }}
@@ -57,10 +57,10 @@ jobs:
           git clone https://github.com/zerotier/ZeroTierOne -b ${{ needs.check.outputs.ver }} /opt/zt
           case $TARGET in 
               mipsel)
-                MUSL_URI=mipsel-linux-musl-cross
+                MUSL_URI=mipsel-linux-muslsf-cross
                 ;;
               mipsel-opt)
-                MUSL_URI=mipsel-linux-musl-cross
+                MUSL_URI=mipsel-linux-muslsf-cross
                 ;;
               arm7l-koolshare)
                 MUSL_URI=arm-linux-musleabi-cross
