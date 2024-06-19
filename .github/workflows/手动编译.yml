@@ -1,0 +1,196 @@
+name: 手动编译zerotier
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: '编译github.zerotier/ZeroTierOne分支或版本号，默认主分支main'
+        required: true
+        default: 'main'
+      ztpath:
+        description: '自定义密钥路径（官方默认：  /var/lib/zerotier-one）'
+        required: false
+        default: ''
+      linux:
+        description: 'linux内核是否低于4.0 （低于4.0的新版本运行会报错 set MAC）'
+        required: true
+        default: false
+        type: boolean
+      target:
+        description: '请选择linux目标CPU架构'
+        required: true
+        type: choice
+        default: 'aarch64'
+        options:
+          - aarch64
+          - armv7m-eabi
+          - armv7l-eabihf
+          - armv6-eabi
+          - armv6-eabihf
+          - armv5l-eabi
+          - armv5l-eabihf
+          - arm-eabi
+          - arm-eabihf
+          - mipsel
+          - mips
+          - mips64
+          - mips64el
+          - powerpc64le
+          - s390x
+      upx:
+        description: '编译完成后是否使用upx压缩，部分架构压缩后运行异常'
+        required: true
+        default: false
+        type: boolean
+
+env:
+  branch: "${{ github.event.inputs.branch }}"
+  target: "${{ github.event.inputs.target }}"
+  ztpath: "${{ github.event.inputs.ztpath }}"
+  
+jobs:
+ zerotier:
+    runs-on: ubuntu-latest
+    steps:
+    
+      - name: 下载源码
+        run: git clone -b $branch https://github.com/zerotier/ZeroTierOne /opt/zerotier
+        
+      - name: 修改arm平台的相关参数
+        run: |
+            cd /opt/zerotier
+            sed -i '/include objects.mk/i    LDLIBS+=-latomic' ./make-linux.mk
+            sed -i 's|override CFLAGS+=-march=armv5t -mfloat-abi=soft -msoft-float -mno-unaligned-access -marm|override CFLAGS+=-mfloat-abi=soft -msoft-float -mno-unaligned-access -marm|g' ./make-linux.mk
+            sed -i 's|override CXXFLAGS+=-march=armv5t -mfloat-abi=soft -msoft-float -mno-unaligned-access -marm|override CXXFLAGS+=-mfloat-abi=soft -msoft-float -mno-unaligned-access -marm|g' ./make-linux.mk
+            sed -i 's|override CFLAGS+=-mfloat-abi=hard -march=armv6zk -marm -mfpu=vfp -mno-unaligned-access -mtp=cp15 -mcpu=arm1176jzf-s|override CFLAGS+=-mfloat-abi=hard -marm -mfpu=vfp -mno-unaligned-access|g' ./make-linux.mk
+            sed -i 's|override CXXFLAGS+=-mfloat-abi=hard -march=armv6zk -marm -mfpu=vfp -fexceptions -mno-unaligned-access -mtp=cp15 -mcpu=arm1176jzf-s|override CXXFLAGS+=-mfloat-abi=hard -marm -mfpu=vfp -fexceptions -mno-unaligned-access|g' ./make-linux.mk
+     
+      - name: 修改内核低于4.0的MAC报错
+        if: github.event.inputs.linux == 'true'
+        run: |
+            cd /opt/zerotier
+            if [ $(cat ./osdep/LinuxEthernetTap.cpp | grep -c "ioctl(sock,SIOCSIFHWADDR,(void") -eq 2 ]; then
+            MAC="$(grep -n "ioctl(sock,SIOCSIFHWADDR,(void" ./osdep/LinuxEthernetTap.cpp | head -2 | tail -1 | awk '{print $1}' | tr -d ": ")" && echo -e "\n\033[42;31;5;1m 删除第 ${MAC} 行 \n\033[0m" &&  sed -i "$((MAC)),+5d" ./osdep/LinuxEthernetTap.cpp 
+            fi
+            cat ./osdep/LinuxEthernetTap.cpp | grep MAC
+            
+      - name: 修改自定义密钥路径
+        if: github.event.inputs.ztpath != ''
+        run: |
+            cd /opt/zerotier
+            echo -e "\n\033[42;31;5;1m 修改${target}架构自定义密钥存储路径 ${ztpath}\n\033[0m"
+            sed -i 's|/var/lib/zerotier-one|$ztpath|g' ./osdep/OSUtils.cpp
+            cat ./osdep/OSUtils.cpp | grep /zerotier-one
+            
+      - name: 下载编译工具链
+        run: |
+            case $target in 
+              aarch64)
+                TARGET=aarch64-linux-musl
+                ;;
+              armv7m-eabi)
+                TARGET=armv7m-linux-musleabi
+                ;;
+              armv7l-eabihf)
+                TARGET=armv7l-linux-musleabihf
+                ;;
+              armv6-eabi)
+                TARGET=armv6-linux-musleabi
+                ;;
+              armv6-eabihf)
+                TARGET=armv6-linux-musleabihf
+                ;;
+              armv5l-eabi)
+                TARGET=armv5l-linux-musleabi
+                ;;
+              armv5l-eabihf)
+                TARGET=armv5l-linux-musleabihf
+                ;;
+              arm-eabi)
+                TARGET=arm-linux-musleabi
+                ;;
+              arm-eabihf)
+                TARGET=arm-linux-musleabihf
+                ;;
+              mipsel)
+                TARGET=mipsel-linux-muslsf
+                ;;
+              mips)
+                TARGET=mips-linux-muslsf
+                ;;
+              mips64)
+                TARGET=mips64-linux-musl
+                ;;
+              mips64el)
+                TARGET=mips64el-linux-musl
+                ;;
+              powerpc64le)
+                TARGET=powerpc64le-linux-musl
+                ;;
+              s390x)
+                TARGET=s390x-linux-musl
+                ;;
+            esac
+            echo "TARGET=$TARGET" >> $GITHUB_ENV
+            mkdir -p /opt/musl_gcc 
+            echo -e "\n\033[42;31;5;1m 开始下载${TARGET}-cross工具链.. \n\033[0m"
+            wget -q -c https://musl.cc/${TARGET}-cross.tgz -P /opt/musl_gcc/
+            echo -e "\n\033[42;31;5;1m 开始解压${TARGET}-cross工具链.. \n\033[0m"
+            tar -xf /opt/musl_gcc/${TARGET}-cross.tgz -C /opt/musl_gcc/
+            echo -e "\n\033[42;31;5;1m 查看${TARGET}-gcc信息 \n\033[0m"
+            /opt/musl_gcc/${TARGET}-cross/bin/${TARGET}-gcc -v
+            sudo timedatectl set-timezone "Asia/Shanghai"
+
+      - name: 开始编译zerotier
+        run: |
+            cd /opt/zerotier
+            version=$(cat ./zerotier-one.spec | awk -F'Version:' 'NR==2 {print $2}' | tr -d ' ')
+            echo "version=_${version}" >> $GITHUB_ENV
+            sed -i '/ZT_SSO_SUPPORTED=1/d' ./make-linux.mk
+            
+            export PATH=$PATH:/opt/musl_gcc/${TARGET}-cross/bin
+            export CORSS_PREFI=/opt/musl_gcc/${TARGET}-cross/bin/${TARGET}-
+            export CC=/opt/musl_gcc/${TARGET}-cross/bin/${TARGET}-gcc
+            export CXX=/opt/musl_gcc/${TARGET}-cross/bin/${TARGET}-g++
+            export RANLIB=/opt/musl_gcc/${TARGET}-cross/bin/${TARGET}-ranlib
+            export LD=/opt/musl_gcc/${TARGET}-cross/bin/${TARGET}-ld
+            export AR=/opt/musl_gcc/${TARGET}-cross/bin/${TARGET}-ar
+            export STRIP=/opt/musl_gcc/${TARGET}-cross/bin/${TARGET}-strip
+            export CFLAGS="-I /opt/musl_gcc/${TARGET}-cross/${TARGET}/include -L /opt/musl_gcc/${TARGET}-cross/${TARGET}/lib -Wl,--gc-sections -Os -ffunction-sections -fdata-sections -D_GNU_SOURCE -D_BSD_SOUR -fPIE"
+            export CXXFLAGS="$CFLAGS"
+            echo -e "\n\033[42;31;5;1m 开始编译... \n\033[0m"
+            CC=${TARGET}-gcc \
+            STRIP=${TARGET}-strip \
+            ZT_STATIC=1 \
+            DEFS="" \
+            OSTYPE="Linux" \
+            make -j$(nproc)
+            mkdir -p /opt/bin
+            echo "zerotier-one ：`du -sh --block-size=M zerotier-one | cut -f1`"
+            file zerotier-one
+            mv -f zerotier-one /opt/bin/
+            cd /opt/bin
+            $STRIP ./zerotier-one
+            #ln -sf zerotier-one zerotier-idtool
+            #ln -sf zerotier-one zerotier-cli
+            
+      - name: 安装 UPX
+        if: github.event.inputs.upx == 'true'
+        uses: crazy-max/ghaction-upx@v3
+        with:
+          version: latest
+          install-only: true
+          
+      - name: UPX压缩
+        if: github.event.inputs.upx == 'true'
+        run: |
+          cd /opt/bin
+          upx --lzma --best zerotier-one
+          echo "zerotier-one ：`du -sh --block-size=M zerotier-one | cut -f1`"
+          file zerotier-one
+          
+      - name: 上传
+        uses: actions/upload-artifact@v4
+        with:
+          name: zerotier${{ env.version }}-${{ env.target }}
+          path: /opt/bin/*
