@@ -70,7 +70,7 @@ jobs:
         run: |
             cd /opt/zerotier
             echo -e "\n\033[42;31;5;1m 修改${target}架构自定义密钥存储路径 ${ztpath}\n\033[0m"
-            sed -i 's|/var/lib/zerotier-one|$ztpath|g' ./osdep/OSUtils.cpp
+            sed -i "s|/var/lib/zerotier-one|$ztpath|g" ./osdep/OSUtils.cpp
             cat ./osdep/OSUtils.cpp | grep /zerotier-one
             
       - name: 下载编译工具链
