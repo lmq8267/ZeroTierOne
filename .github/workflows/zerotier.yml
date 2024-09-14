@@ -1,8 +1,8 @@
 name: 编译zerotier
 
 on:
-  schedule:
-    - cron: '0 3,20 * * *'
+  #schedule:
+    #- cron: '0 3,20 * * *'
   workflow_dispatch:
 jobs:
  check:
