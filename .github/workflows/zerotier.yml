@@ -120,8 +120,8 @@ jobs:
           sed -i 's|/var/lib/zerotier-one|/jffs/softcenter/etc/zerotier-one|g' ./osdep/OSUtils.cpp
           fi
           cat ./osdep/OSUtils.cpp | grep /zerotier-one
-          if [ $(cat ./osdep/LinuxEthernetTap.cpp | grep -c "ioctl(sock,SIOCSIFHWADDR,(void") -eq 2 ]; then
-          MAC="$(grep -n "ioctl(sock,SIOCSIFHWADDR,(void" ./osdep/LinuxEthernetTap.cpp | head -2 | tail -1 | awk '{print $1}' | tr -d ": ")" && echo -e "\n\033[42;31;5;1m 删除第 ${MAC} 行 \n\033[0m" &&  sed -i "$((MAC)),+5d" ./osdep/LinuxEthernetTap.cpp && cat ./osdep/LinuxEthernetTap.cpp | grep MAC
+          if [ $(cat ./osdep/LinuxEthernetTap.cpp | grep -c "ioctl(sock, SIOCSIFHWADDR, (void") -eq 2 ]; then
+          MAC="$(grep -n "ioctl(sock, SIOCSIFHWADDR, (void" ./osdep/LinuxEthernetTap.cpp | head -2 | tail -1 | awk '{print $1}' | tr -d ": ")" && echo -e "\n\033[42;31;5;1m 删除第 ${MAC} 行 \n\033[0m" &&  sed -i "$((MAC)),+5d" ./osdep/LinuxEthernetTap.cpp && cat ./osdep/LinuxEthernetTap.cpp | grep MAC
           fi
           
           echo -e "\n\033[42;31;5;1m 设置编译环境变量 \n\033[0m"
