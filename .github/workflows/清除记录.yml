@@ -19,3 +19,14 @@ jobs:
         token: ${{ secrets.c8 }}
         retain_days: 2
         keep_minimum_runs: 0
+  keepalive-workflow:
+    # github超过60天未提交将自动停止工作流
+    name: 工作流保活 
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: gautamkrishnar/keepalive-workflow@v2
+        #with:
+          #use_api: true
