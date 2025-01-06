@@ -4,6 +4,13 @@ on:
   schedule:
     - cron: '0 3,20 * * *'
   workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+env:
+  TZ: Asia/Shanghai
 jobs:
  check:
   runs-on: ubuntu-latest
@@ -15,10 +22,17 @@ jobs:
     id: getversion
     run: |
       ver=`curl https://api.github.com/repos/zerotier/ZeroTierOne/releases/latest | jq -r '.tag_name'`
-      cver=`curl https://api.github.com/repos/lmq8267/ZeroTierOne/releases/latest | jq -r '.tag_name'`
+      cver=`curl https://api.github.com/repos/${{ github.repository }}/releases/latest | jq -r '.tag_name'`
       echo "最新版本${ver} 当前版本${cver}"
       echo "ver=${ver}" >> $GITHUB_OUTPUT
       echo "cver=${cver}" >> $GITHUB_OUTPUT
+  - name: delete-workflow
+    uses: Mattraks/delete-workflow-runs@main
+    with:
+      token: ${{ secrets.GITHUB_TOKEN }}
+      retain_days: 0
+      keep_minimum_runs: 0
+      
  build:
     needs: check
     if: ${{ needs.check.outputs.ver != needs.check.outputs.cver }}
@@ -50,7 +64,7 @@ jobs:
       OS: ${{ matrix.OS }}
       GCC: ${{ matrix.GCC }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: 下载编译工具链
         run: |
           echo -e "\n\033[42;31;5;1m 开始克隆${{ needs.check.outputs.ver }}源码... \n\033[0m"
@@ -200,7 +214,7 @@ jobs:
             if git status --porcelain | grep .; then
             git add .
             git commit -am "上传时间： $(date '+%Y-%m-%d %H:%M:%S')"
-            git push --quiet "https://${{ secrets.c8 }}@github.com/lmq8267/ZeroTierOne.git"
+            git push --quiet "https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
             else
             echo -e "\n\033[42;31;5;1m 没有任何变动，无需上传提交！ \n\033[0m"
             fi 
@@ -324,9 +338,9 @@ jobs:
           #files: /opt/koolshare/zerotier-${{ needs.check.outputs.ver }}.tar.gz
       - 
         name: 发布release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
-          token: ${{ secrets.c8 }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           body: |
            > ### 编译时间：${{ env.build_time }}
            **文件说明：**
@@ -357,19 +371,14 @@ jobs:
             /opt/bin/zerotier-one/zerotier-one
             /opt/bin/zerotier-one/MD5.txt
             /opt/ipk/zerotier_${{ needs.check.outputs.ver }}-1_mipsel-3.4.ipk
-      - 
-        name: 删除工作流
-        uses: GitRML/delete-workflow-runs@main
-        with:
-         token: ${{ secrets.c8 }}
-         retain_days: 2
-         keep_minimum_runs: 0
+            
  keepalive-workflow:
     # github超过60天未提交将自动停止工作流
     name: 工作流保活 
     runs-on: ubuntu-latest
     permissions:
       actions: write
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: gautamkrishnar/keepalive-workflow@v2
