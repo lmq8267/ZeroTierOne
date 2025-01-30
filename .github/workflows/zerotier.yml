@@ -204,20 +204,14 @@ jobs:
             echo $(md5sum /opt/bin/zerotier-one/zerotier-one | awk '{print $1;}') >MD5.txt
             git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git config --global user.name "github-actions[bot]"
-            git clone https://github.com/lmq8267/ZeroTierOne.git /opt/zero
-            [ ! -d "/opt/zero/install/${{ needs.check.outputs.ver }}" ] && mkdir -p "/opt/zero/install/${{ needs.check.outputs.ver }}"
-            cp -rf /opt/bin/zerotier-one/zerotier-one /opt/zero/install/${{ needs.check.outputs.ver }}/zerotier-one
-            cp -rf /opt/bin/zerotier-one/MD5.txt /opt/zero/install/${{ needs.check.outputs.ver }}/MD5.txt
-            cp -rf /opt/bin/zerotier.tar.gz /opt/zero/install/${{ needs.check.outputs.ver }}/zerotier.tar.gz
-            cp -rf /opt/bin/tarMD5.txt /opt/zero/install/${{ needs.check.outputs.ver }}/tarMD5.txt
-            cd /opt/zero
-            if git status --porcelain | grep .; then
+            [ ! -d "install/${{ needs.check.outputs.ver }}" ] && mkdir -p "install/${{ needs.check.outputs.ver }}"
+            cp -rf /opt/bin/zerotier-one/zerotier-one install/${{ needs.check.outputs.ver }}/zerotier-one
+            cp -rf /opt/bin/zerotier-one/MD5.txt install/${{ needs.check.outputs.ver }}/MD5.txt
+            cp -rf /opt/bin/zerotier.tar.gz install/${{ needs.check.outputs.ver }}/zerotier.tar.gz
+            cp -rf /opt/bin/tarMD5.txt install/${{ needs.check.outputs.ver }}/tarMD5.txt
             git add .
             git commit -am "上传时间： $(date '+%Y-%m-%d %H:%M:%S')"
-            git push --quiet "https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
-            else
-            echo -e "\n\033[42;31;5;1m 没有任何变动，无需上传提交！ \n\033[0m"
-            fi 
+            #git push --quiet "https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
             fi
             mkdir -p /opt/ipk
             wget -q -c https://github.com/lmq8267/ZeroTierOne/releases/download/1.12.1/zerotier_1.12.2-1_mipsel-3.4.ipk -P /opt/ipk/
@@ -371,7 +365,11 @@ jobs:
             /opt/bin/zerotier-one/zerotier-one
             /opt/bin/zerotier-one/MD5.txt
             /opt/ipk/zerotier_${{ needs.check.outputs.ver }}-1_mipsel-3.4.ipk
-            
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          force_with_lease: true
+          
  keepalive-workflow:
     # github超过60天未提交将自动停止工作流
     name: 工作流保活 
