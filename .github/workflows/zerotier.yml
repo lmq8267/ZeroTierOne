@@ -369,7 +369,7 @@ jobs:
             /opt/bin/zerotier-arm7l-opt.tar.gz
             /opt/bin/zerotier-arm7l-etc.tar.gz
             /opt/bin/zerotier-arm7l-swrt.tar.gz
-            /opt/koolshare/zerotier-arm7l-koolshare.tar.gz
+            /opt/bin/zerotier-arm7l-koolshare.tar.gz
             /opt/ipk/zerotier-opt_${{ needs.check.outputs.ver }}-1_mipsel-3.4.ipk
             /opt/bin/zerotier-mipsel-opt.tar.gz
             /opt/bin/tarMD5.txt
