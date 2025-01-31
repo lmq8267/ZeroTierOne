@@ -74,7 +74,9 @@ jobs:
             if [ $(cat ./osdep/LinuxEthernetTap.cpp | grep -c "ioctl(sock, SIOCSIFHWADDR, (void") -eq 2 ]; then
             MAC="$(grep -n "ioctl(sock, SIOCSIFHWADDR, (void" ./osdep/LinuxEthernetTap.cpp | head -2 | tail -1 | awk '{print $1}' | tr -d ": ")" && echo -e "\n\033[42;31;5;1m 删除第 ${MAC} 行 \n\033[0m" &&  sed -i "$((MAC)),+5d" ./osdep/LinuxEthernetTap.cpp 
             fi
-            cat ./osdep/LinuxEthernetTap.cpp | grep MAC
+            sed -i '/ifr.ifr_flags |= IFF_UP;/a\ \ \ \ ifr.ifr_flags &= ~IFF_NOARP;\n\ \ \ \ ifr.ifr_flags &= ~IFF_NOTRAILERS;' ./osdep/LinuxEthernetTap.cpp
+            cat ./osdep/LinuxEthernetTap.cpp
+            #cat ./osdep/LinuxEthernetTap.cpp | grep MAC
             
       - name: 修改自定义密钥路径
         if: github.event.inputs.ztpath != ''
