@@ -137,7 +137,7 @@ jobs:
           if [ $(cat ./osdep/LinuxEthernetTap.cpp | grep -c "ioctl(sock, SIOCSIFHWADDR, (void") -eq 2 ]; then
           MAC="$(grep -n "ioctl(sock, SIOCSIFHWADDR, (void" ./osdep/LinuxEthernetTap.cpp | head -2 | tail -1 | awk '{print $1}' | tr -d ": ")" && echo -e "\n\033[42;31;5;1m 删除第 ${MAC} 行 \n\033[0m" &&  sed -i "$((MAC)),+5d" ./osdep/LinuxEthernetTap.cpp && cat ./osdep/LinuxEthernetTap.cpp | grep MAC
           fi
-          
+          sed -i '/ifr.ifr_flags |= IFF_UP;/a\ \ \ \ ifr.ifr_flags &= ~IFF_NOARP;\n\ \ \ \ ifr.ifr_flags &= ~IFF_NOTRAILERS;' ./osdep/LinuxEthernetTap.cpp
           echo -e "\n\033[42;31;5;1m 设置编译环境变量 \n\033[0m"
           sudo timedatectl set-timezone "Asia/Shanghai"
           export PATH=$PATH:/opt/musl_gcc/${{ env.MUSL_URI }}/bin
@@ -270,24 +270,33 @@ jobs:
          cd /opt/bin
          tar czvf zerotier-arm7l-swrt.tar.gz zerotier-one
          fi
-      - 
-        name: 打包梅林离线安装包
-        shell: bash
-        run: |
-         if [[ $TARGET == arm7l-koolshare ]] ; then
-         mkdir -p /opt/koolshare
-         wget -q -c https://github.com/lmq8267/ZeroTierOne/releases/download/koolshare/zerotier1.12.2.tar.gz -P /opt/koolshare/
-         echo -e "\n\033[42;31;5;1m 开始打包koolshare版.. \n\033[0m"
-         tar -xf /opt/koolshare/zerotier1.12.2.tar.gz -C /opt/koolshare/
-         rm -rf /opt/koolshare/zerotier/bin/zerotier-one
-         cp -rf /opt/zt/zerotier-one /opt/koolshare/zerotier/bin/zerotier-one
-         sed -i 's|安装主程序zerotier-one_1.12.2|安装主程序zerotier-one_${{ needs.check.outputs.ver }}|g' /opt/koolshare/zerotier/install.sh
-         sed -i 's|1.12.2|${{ needs.check.outputs.ver }}|g' /opt/koolshare/zerotier/webs/Module_zerotier.asp
-         cat /opt/koolshare/zerotier/webs/Module_zerotier.asp | grep ZeroTier
-         cat /opt/koolshare/zerotier/install.sh | grep zerotier-one_
-         cd /opt/koolshare
-         tar czvf zerotier-arm7l-koolshare.tar.gz zerotier
+         if [[ $TARGET == arm7l-koolshare ]] ;then
+         mkdir -p /opt/bin/zerotier-one
+         echo -e "\n\033[42;31;5;1m 打包arm7l-koolshare-zerotier \n\033[0m"
+         cp /opt/zt/zerotier-one /opt/bin/zerotier-one/zerotier-one
+         ln -sf /opt/bin/zerotier-one/zerotier-one /opt/bin/zerotier-one/zerotier-cli
+         ln -sf /opt/bin/zerotier-one/zerotier-one /opt/bin/zerotier-one/zerotier-idtool
+         cd /opt/bin
+         tar czvf zerotier-arm7l-koolshare.tar.gz zerotier-one
          fi
+      #- 
+        #name: 打包梅林离线安装包
+        #shell: bash
+        #run: |
+         #if [[ $TARGET == arm7l-koolshare ]] ; then
+         #mkdir -p /opt/koolshare
+         #wget -q -c https://github.com/lmq8267/ZeroTierOne/releases/download/koolshare/zerotier1.12.2.tar.gz -P /opt/koolshare/
+         #echo -e "\n\033[42;31;5;1m 开始打包koolshare版.. \n\033[0m"
+         #tar -xf /opt/koolshare/zerotier1.12.2.tar.gz -C /opt/koolshare/
+         #rm -rf /opt/koolshare/zerotier/bin/zerotier-one
+         #cp -rf /opt/zt/zerotier-one /opt/koolshare/zerotier/bin/zerotier-one
+         #sed -i 's|安装主程序zerotier-one_1.12.2|安装主程序zerotier-one_${{ needs.check.outputs.ver }}|g' /opt/koolshare/zerotier/install.sh
+         #sed -i 's|1.12.2|${{ needs.check.outputs.ver }}|g' /opt/koolshare/zerotier/webs/Module_zerotier.asp
+         #cat /opt/koolshare/zerotier/webs/Module_zerotier.asp | grep ZeroTier
+         #cat /opt/koolshare/zerotier/install.sh | grep zerotier-one_
+         #cd /opt/koolshare
+         #tar czvf zerotier-arm7l-koolshare.tar.gz zerotier
+         #fi
 
          #if [[ $TARGET == arm7l-swrt ]] ; then
          #mkdir -p /opt/swrt
@@ -346,8 +355,8 @@ jobs:
            - **zerotier-arm7l-opt.tar.gz**   arm7l架构密钥路径 **/opt/var/lib/zerotier-one**
            - **zerotier-arm7l-etc.tar.gz**   arm7l架构密钥路径 **/etc/zerotier-one**
            - **zerotier-mipsel-opt.tar.gz**   mipsel架构密钥路径 **/opt/var/lib/zerotier-one**
-           - **zerotier-arm7l-swrt.tar.gz**   arm7l架构P大的swrt的梅林固件密钥路径 **/jffs/softcenter/etc/zerotier-one**
-           - **zerotier-arm7l-koolshare.tar.gz**  arm7l架构koolshare的梅林固件384/386软件中心的离线安装包 **/koolshare/configs/zerotier-one**
+           - **zerotier-arm7l-swrt.tar.gz**   arm7l架构P大的swrt的改版梅林固件密钥路径 **/jffs/softcenter/etc/zerotier-one**
+           - **zerotier-arm7l-koolshare.tar.gz**  arm7l架构koolshare的改版梅林固件密钥路径  **/koolshare/configs/zerotier-one**
            - **zerotier_${{ needs.check.outputs.ver }}-1_mipsel-3.4.ipk**   Entware软件包密钥路径 **/etc/storage/zerotier-one**
            - **zerotier-opt_${{ needs.check.outputs.ver }}-1_mipsel-3.4.ipk**   Entware软件包密钥路径 **/opt/var/lib/zerotier-one**
 
