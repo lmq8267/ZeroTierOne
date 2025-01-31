@@ -190,6 +190,7 @@ jobs:
         name: 打包上传
         shell: bash
         run: |
+         BASE=`pwd`
          if [[ $TARGET == mipsel ]] ; then
          mkdir -p /opt/bin/zerotier-one
          echo -e "\n\033[42;31;5;1m 打包padavan的zerotier \n\033[0m"
@@ -204,6 +205,7 @@ jobs:
             echo $(md5sum /opt/bin/zerotier-one/zerotier-one | awk '{print $1;}') >MD5.txt
             git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git config --global user.name "github-actions[bot]"
+            cd $BASE
             [ ! -d "install/${{ needs.check.outputs.ver }}" ] && mkdir -p "install/${{ needs.check.outputs.ver }}"
             cp -rf /opt/bin/zerotier-one/zerotier-one install/${{ needs.check.outputs.ver }}/zerotier-one
             cp -rf /opt/bin/zerotier-one/MD5.txt install/${{ needs.check.outputs.ver }}/MD5.txt
