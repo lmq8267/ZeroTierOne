@@ -185,7 +185,7 @@ jobs:
           echo -e "\n\033[42;31;5;1m 查看压缩后的体积 \n\033[0m"
           du -k zerotier-one
           echo -e "\n\033[42;31;5;1m 编译时间：$(date '+%Y-%m-%d %H:%M:%S') \n\033[0m"
-          echo "build_time=$(date '+%Y-%m-%d %H:%M:%S')" >> $GITHUB_ENV
+          echo "build_time=$(date '+%Y年%m月%d日%H:%M:%S' | jq -sRr @uri)" >> $GITHUB_ENV
       - 
         name: 打包上传
         shell: bash
@@ -347,7 +347,8 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           body: |
-           > ### 编译时间：${{ env.build_time }}
+           > ### ![](https://img.shields.io/badge/%E7%BC%96%E8%AF%91%E6%97%B6%E9%97%B4-${{ env.build_time }}-8267?logo=github&labelColor=%E9%A1%BB)![](https://img.shields.io/github/downloads/${GITHUB_REPOSITORY}/${{ needs.check.outputs.ver }}/total?label=%E4%B8%8B%E8%BD%BD%E6%AC%A1%E6%95%B0&logo=github) 
+           
            **文件说明：**
 
            - **zerotier.tar.gz**    mipsel架构padavan固件压缩包 密钥路径 **/etc/storage/zerotier-one**
