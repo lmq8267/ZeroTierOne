@@ -198,7 +198,7 @@ jobs:
         if: github.event.inputs.upx == 'true'
         uses: crazy-max/ghaction-upx@v3
         with:
-          version: latest
+          version: v4.2.4
           install-only: true
           
       - name: UPX压缩
