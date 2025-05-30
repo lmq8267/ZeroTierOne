@@ -92,7 +92,7 @@ jobs:
           echo "MUSL_URI=${MUSL_URI}" >> $GITHUB_ENV
           mkdir -p /opt/musl_gcc 
           echo -e "\n\033[42;31;5;1m 开始下载musl工具链.. \n\033[0m"
-          wget -q -c https://musl.cc/$MUSL_URI.tgz -P /opt/musl_gcc/
+          wget -q -c https://github.com/lmq8267/Toolchain/releases/download/musl-cross/$MUSL_URI.tgz -P /opt/musl_gcc/
           echo -e "\n\033[42;31;5;1m 开始解压musl工具链.. \n\033[0m"
           tar -xf /opt/musl_gcc/$MUSL_URI.tgz -C /opt/musl_gcc/
           echo -e "\n\033[42;31;5;1m 查看musl-gcc信息 \n\033[0m"
