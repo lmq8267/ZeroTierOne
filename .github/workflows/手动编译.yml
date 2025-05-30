@@ -150,7 +150,7 @@ jobs:
             echo "TARGET=$TARGET" >> $GITHUB_ENV
             mkdir -p /opt/musl_gcc 
             echo -e "\n\033[42;31;5;1m 开始下载${TARGET}-cross工具链.. \n\033[0m"
-            wget -q -c https://musl.cc/${TARGET}-cross.tgz -P /opt/musl_gcc/
+            wget -q -c https://github.com/lmq8267/Toolchain/releases/download/musl-cross/${TARGET}-cross.tgz -P /opt/musl_gcc/
             echo -e "\n\033[42;31;5;1m 开始解压${TARGET}-cross工具链.. \n\033[0m"
             tar -xf /opt/musl_gcc/${TARGET}-cross.tgz -C /opt/musl_gcc/
             echo -e "\n\033[42;31;5;1m 查看${TARGET}-gcc信息 \n\033[0m"
