@@ -366,17 +366,18 @@ jobs:
            **[官方更新说明](https://github.com/zerotier/ZeroTierOne/releases)**
           tag_name: ${{ needs.check.outputs.ver }}
           files: |
-            /opt/bin/zerotier.tar.gz
             /opt/bin/zerotier-arm7l-opt.tar.gz
             /opt/bin/zerotier-arm7l-etc.tar.gz
             /opt/bin/zerotier-arm7l-swrt.tar.gz
             /opt/bin/zerotier-arm7l-koolshare.tar.gz
             /opt/ipk/zerotier-opt_${{ needs.check.outputs.ver }}-1_mipsel-3.4.ipk
             /opt/bin/zerotier-mipsel-opt.tar.gz
-            /opt/bin/tarMD5.txt
-            /opt/bin/zerotier-one/zerotier-one
-            /opt/bin/zerotier-one/MD5.txt
             /opt/ipk/zerotier_${{ needs.check.outputs.ver }}-1_mipsel-3.4.ipk
+            ${{ matrix.TARGET == 'mipsel' && '/opt/bin/zerotier.tar.gz' || '' }}
+            ${{ matrix.TARGET == 'mipsel' && '/opt/bin/tarMD5.txt' || '' }}
+            ${{ matrix.TARGET == 'mipsel' && '/opt/bin/zerotier-one/zerotier-one' || '' }}
+            ${{ matrix.TARGET == 'mipsel' && '/opt/bin/zerotier-one/MD5.txt' || '' }}
+            
       - name: Push changes
         uses: ad-m/github-push-action@master
         with:
