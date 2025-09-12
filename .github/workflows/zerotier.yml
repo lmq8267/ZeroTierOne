@@ -373,10 +373,37 @@ jobs:
             /opt/ipk/zerotier-opt_${{ needs.check.outputs.ver }}-1_mipsel-3.4.ipk
             /opt/bin/zerotier-mipsel-opt.tar.gz
             /opt/ipk/zerotier_${{ needs.check.outputs.ver }}-1_mipsel-3.4.ipk
-            ${{ matrix.TARGET == 'mipsel' && '/opt/bin/zerotier.tar.gz' || '' }}
-            ${{ matrix.TARGET == 'mipsel' && '/opt/bin/tarMD5.txt' || '' }}
-            ${{ matrix.TARGET == 'mipsel' && '/opt/bin/zerotier-one/zerotier-one' || '' }}
-            ${{ matrix.TARGET == 'mipsel' && '/opt/bin/zerotier-one/MD5.txt' || '' }}
+
+      - 
+        name: 发布release
+        if: matrix.TARGET == 'mipsel'
+        uses: softprops/action-gh-release@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          body: |
+           > ### ![](https://img.shields.io/badge/%E7%BC%96%E8%AF%91%E6%97%B6%E9%97%B4-${{ env.build_time }}-8267?logo=github&labelColor=%E9%A1%BB)![](https://img.shields.io/github/downloads/${{ github.repository }}/${{ needs.check.outputs.ver }}/total?label=%E4%B8%8B%E8%BD%BD%E6%AC%A1%E6%95%B0&logo=github) 
+           
+           **文件说明：**
+
+           - **zerotier.tar.gz**    mipsel架构padavan固件压缩包 密钥路径 **/etc/storage/zerotier-one**
+           - **tarMD5.txt** 为 **zerotier.tar.gz** 压缩包的MD5校验值
+           - **zerotier-one**  mipsel架构padavan固件单独二进制文件 密钥路径 **/etc/storage/zerotier-one**
+           - **MD5.txt**  为 **zerotier-one** 单独二进制文件的MD5校验值
+           - **zerotier-arm7l-opt.tar.gz**   arm7l架构密钥路径 **/opt/var/lib/zerotier-one**
+           - **zerotier-arm7l-etc.tar.gz**   arm7l架构密钥路径 **/etc/zerotier-one**
+           - **zerotier-mipsel-opt.tar.gz**   mipsel架构密钥路径 **/opt/var/lib/zerotier-one**
+           - **zerotier-arm7l-swrt.tar.gz**   arm7l架构P大的swrt的改版梅林固件密钥路径 **/jffs/softcenter/etc/zerotier-one**
+           - **zerotier-arm7l-koolshare.tar.gz**  arm7l架构koolshare的改版梅林固件密钥路径  **/koolshare/configs/zerotier-one**
+           - **zerotier_${{ needs.check.outputs.ver }}-1_mipsel-3.4.ipk**   Entware软件包密钥路径 **/etc/storage/zerotier-one**
+           - **zerotier-opt_${{ needs.check.outputs.ver }}-1_mipsel-3.4.ipk**   Entware软件包密钥路径 **/opt/var/lib/zerotier-one**
+
+           **[官方更新说明](https://github.com/zerotier/ZeroTierOne/releases)**
+          tag_name: ${{ needs.check.outputs.ver }}
+          files: |
+            /opt/bin/zerotier.tar.gz
+            /opt/bin/tarMD5.txt
+            /opt/bin/zerotier-one/zerotier-one
+            /opt/bin/zerotier-one/MD5.txt
             
       - name: Push changes
         uses: ad-m/github-push-action@master
