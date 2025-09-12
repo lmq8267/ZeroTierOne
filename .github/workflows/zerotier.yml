@@ -157,15 +157,15 @@ jobs:
           ZT_STATIC=1 \
           OSTYPE="Linux" \
           make
+
+      - name: 安装 UPX
+        uses: crazy-max/ghaction-upx@v3
+        with:
+          version: v4.2.4
+          install-only: true
       - 
         name: 剥离压缩
         run: |
-          echo -e "\n\033[42;31;5;1m 开始下载指定版本upx \n\033[0m"
-          git clone https://github.com/lmq8267/cloudflared.git /opt/st
-          tar -xf /opt/st/upx-3.95-amd64_linux.tar.xz -C /opt
-          chmod 777 /opt/upx-3.95-amd64_linux/upx
-          tar -xf /opt/st/upx-4.1.0-amd64_linux.tar.xz -C /opt
-          chmod 777 /opt/upx-4.1.0-amd64_linux/upx
           cd /opt/zt
           echo -e "\n\033[42;31;5;1m 查看二进制程序信息 \n\033[0m"
           file zerotier-one
@@ -177,11 +177,7 @@ jobs:
           echo -e "\n\033[42;31;5;1m 查看剥离后的体积 \n\033[0m"
           du -k zerotier-one
           echo -e "\n\033[42;31;5;1m 开始upx压缩... \n\033[0m"
-          if [[ $TARGET == mipsel ]] || [[ $TARGET == mipsel-opt ]] ; then
-          /opt/upx-3.95-amd64_linux/upx --lzma --best zerotier-one
-          else
-          /opt/upx-4.1.0-amd64_linux/upx --lzma --best zerotier-one
-          fi
+          upx --lzma --best zerotier-one
           echo -e "\n\033[42;31;5;1m 查看压缩后的体积 \n\033[0m"
           du -k zerotier-one
           echo -e "\n\033[42;31;5;1m 编译时间：$(date '+%Y-%m-%d %H:%M:%S') \n\033[0m"
