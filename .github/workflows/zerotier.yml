@@ -219,7 +219,7 @@ jobs:
               cp -rf /opt/bin/tarMD5.txt install/${{ needs.check.outputs.ver }}/tarMD5.txt
               git add .
               git commit -am "上传时间： $(date '+%Y-%m-%d %H:%M:%S')"
-              #git push --quiet "https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+              git push --quiet "https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
            fi
             mkdir -p /opt/ipk
             wget -q -c https://github.com/lmq8267/ZeroTierOne/releases/download/1.12.1/zerotier_1.12.2-1_mipsel-3.4.ipk -P /opt/ipk/
@@ -416,10 +416,10 @@ jobs:
             /opt/bin/zerotier-mipsel-opt.tar.gz
             /opt/ipk/zerotier_${{ needs.check.outputs.ver }}-1_mipsel-3.4.ipk
             
-      - name: Push changes
-        uses: ad-m/github-push-action@master
-        with:
-          force_with_lease: true
+      #- name: Push changes
+        #uses: ad-m/github-push-action@master
+        #with:
+          #force_with_lease: true
           
  keepalive-workflow:
     # github超过60天未提交将自动停止工作流
