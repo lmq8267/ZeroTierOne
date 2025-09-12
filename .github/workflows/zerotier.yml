@@ -109,35 +109,44 @@ jobs:
           sed -i 's|override CXXFLAGS+=-march=armv5t -mfloat-abi=soft -msoft-float -mno-unaligned-access -marm|override CXXFLAGS+=-mfloat-abi=soft -msoft-float -mno-unaligned-access -marm|g' ./make-linux.mk
           sed -i 's|override CFLAGS+=-mfloat-abi=hard -march=armv6zk -marm -mfpu=vfp -mno-unaligned-access -mtp=cp15 -mcpu=arm1176jzf-s|override CFLAGS+=-mfloat-abi=soft -msoft-float -mno-unaligned-access -marm|g' ./make-linux.mk
           sed -i 's|override CXXFLAGS+=-mfloat-abi=hard -march=armv6zk -marm -mfpu=vfp -fexceptions -mno-unaligned-access -mtp=cp15 -mcpu=arm1176jzf-s|override CXXFLAGS+=-mfloat-abi=soft -msoft-float -mno-unaligned-access -marm|g' ./make-linux.mk
+          
           if [[ $TARGET == mipsel ]] ; then
-          echo -e "\n\033[42;31;5;1m 修改mipsel架构密钥存储路径 \n\033[0m"
-          sed -i 's|/var/lib/zerotier-one|/etc/storage/zerotier-one|g' ./osdep/OSUtils.cpp
+            echo -e "\n\033[42;31;5;1m 修改mipsel架构密钥存储路径 \n\033[0m"
+            sed -i 's|/var/lib/zerotier-one|/etc/storage/zerotier-one|g' ./osdep/OSUtils.cpp
           fi
+          
           if [[ $TARGET == mipsel-opt ]] ; then
-          echo -e "\n\033[42;31;5;1m 修改mipsel架构Entware密钥存储路径 \n\033[0m"
-          sed -i 's|/var/lib/zerotier-one|/opt/var/lib/zerotier-one|g' ./osdep/OSUtils.cpp
+            echo -e "\n\033[42;31;5;1m 修改mipsel架构Entware密钥存储路径 \n\033[0m"
+            sed -i 's|/var/lib/zerotier-one|/opt/var/lib/zerotier-one|g' ./osdep/OSUtils.cpp
           fi
+          
           if [[ $TARGET == arm7l-opt ]] ; then
-          echo -e "\n\033[42;31;5;1m 修改arm7l架构Entware密钥存储路径 \n\033[0m"
-          sed -i 's|/var/lib/zerotier-one|/opt/var/lib/zerotier-one|g' ./osdep/OSUtils.cpp
+            echo -e "\n\033[42;31;5;1m 修改arm7l架构Entware密钥存储路径 \n\033[0m"
+            sed -i 's|/var/lib/zerotier-one|/opt/var/lib/zerotier-one|g' ./osdep/OSUtils.cpp
           fi
+          
           if [[ $TARGET == arm7l-etc ]] ; then
-          echo -e "\n\033[42;31;5;1m 修改arm7l架构Entware密钥存储路径 \n\033[0m"
-          sed -i 's|/var/lib/zerotier-one|/etc/zerotier-one|g' ./osdep/OSUtils.cpp
+            echo -e "\n\033[42;31;5;1m 修改arm7l架构Entware密钥存储路径 \n\033[0m"
+            sed -i 's|/var/lib/zerotier-one|/etc/zerotier-one|g' ./osdep/OSUtils.cpp
           fi
+          
           if [[ $TARGET == arm7l-koolshare ]] ; then
-          echo -e "\n\033[42;31;5;1m 修改arm7l架构koolshare密钥存储路径 \n\033[0m"
-          sed -i 's|/var/lib/zerotier-one|/koolshare/configs/zerotier-one|g' ./osdep/OSUtils.cpp
+            echo -e "\n\033[42;31;5;1m 修改arm7l架构koolshare密钥存储路径 \n\033[0m"
+            sed -i 's|/var/lib/zerotier-one|/koolshare/configs/zerotier-one|g' ./osdep/OSUtils.cpp
           fi
+          
           if [[ $TARGET == arm7l-swrt ]] ; then
-          echo -e "\n\033[42;31;5;1m 修改arm7l架构swrt密钥存储路径 \n\033[0m"
-          sed -i 's|/var/lib/zerotier-one|/jffs/softcenter/etc/zerotier-one|g' ./osdep/OSUtils.cpp
+            echo -e "\n\033[42;31;5;1m 修改arm7l架构swrt密钥存储路径 \n\033[0m"
+            sed -i 's|/var/lib/zerotier-one|/jffs/softcenter/etc/zerotier-one|g' ./osdep/OSUtils.cpp
           fi
+          
           cat ./osdep/OSUtils.cpp | grep /zerotier-one
           if [ $(cat ./osdep/LinuxEthernetTap.cpp | grep -c "ioctl(sock, SIOCSIFHWADDR, (void") -eq 2 ]; then
-          MAC="$(grep -n "ioctl(sock, SIOCSIFHWADDR, (void" ./osdep/LinuxEthernetTap.cpp | head -2 | tail -1 | awk '{print $1}' | tr -d ": ")" && echo -e "\n\033[42;31;5;1m 删除第 ${MAC} 行 \n\033[0m" &&  sed -i "$((MAC)),+5d" ./osdep/LinuxEthernetTap.cpp && cat ./osdep/LinuxEthernetTap.cpp | grep MAC
+            MAC="$(grep -n "ioctl(sock, SIOCSIFHWADDR, (void" ./osdep/LinuxEthernetTap.cpp | head -2 | tail -1 | awk '{print $1}' | tr -d ": ")" && echo -e "\n\033[42;31;5;1m 删除第 ${MAC} 行 \n\033[0m" &&  sed -i "$((MAC)),+5d" ./osdep/LinuxEthernetTap.cpp && cat ./osdep/LinuxEthernetTap.cpp | grep MAC
           fi
+          
           sed -i '/ifr.ifr_flags |= IFF_UP;/a\ \ \ \ ifr.ifr_flags &= ~IFF_NOARP;\n\ \ \ \ ifr.ifr_flags &= ~IFF_NOTRAILERS;' ./osdep/LinuxEthernetTap.cpp
+          
           echo -e "\n\033[42;31;5;1m 设置编译环境变量 \n\033[0m"
           sudo timedatectl set-timezone "Asia/Shanghai"
           export PATH=$PATH:/opt/musl_gcc/${{ env.MUSL_URI }}/bin
@@ -152,6 +161,7 @@ jobs:
           export CXXFLAGS="$CFLAGS"
           export TARGET_CFLAGS=" -DNDEBUG -DBOOST_NO_FENV_H -DBOOST_DISABLE_ASSERTS"
           echo -e "\n\033[42;31;5;1m 开始编译... \n\033[0m"
+          
           CC=${{ matrix.GCC }}-gcc \
           STRIP=${{ matrix.GCC }}-strip \
           ZT_STATIC=1 \
@@ -188,29 +198,29 @@ jobs:
         run: |
          BASE=`pwd`
          if [[ $TARGET == mipsel ]] ; then
-         mkdir -p /opt/bin/zerotier-one
-         echo -e "\n\033[42;31;5;1m 打包padavan的zerotier \n\033[0m"
-         cp /opt/zt/zerotier-one /opt/bin/zerotier-one/zerotier-one
-         ln -sf /opt/bin/zerotier-one/zerotier-one /opt/bin/zerotier-one/zerotier-cli
-         ln -sf /opt/bin/zerotier-one/zerotier-one /opt/bin/zerotier-one/zerotier-idtool
-         cd /opt/bin
-         tar czvf zerotier.tar.gz zerotier-one
-            if [[ $TARGET == mipsel ]] ; then
-            echo $(md5sum /opt/bin/zerotier.tar.gz | awk '{print $1;}') >tarMD5.txt
-            cd /opt/bin/zerotier-one
-            echo $(md5sum /opt/bin/zerotier-one/zerotier-one | awk '{print $1;}') >MD5.txt
-            git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git config --global user.name "github-actions[bot]"
-            cd $BASE
-            [ ! -d "install/${{ needs.check.outputs.ver }}" ] && mkdir -p "install/${{ needs.check.outputs.ver }}"
-            cp -rf /opt/bin/zerotier-one/zerotier-one install/${{ needs.check.outputs.ver }}/zerotier-one
-            cp -rf /opt/bin/zerotier-one/MD5.txt install/${{ needs.check.outputs.ver }}/MD5.txt
-            cp -rf /opt/bin/zerotier.tar.gz install/${{ needs.check.outputs.ver }}/zerotier.tar.gz
-            cp -rf /opt/bin/tarMD5.txt install/${{ needs.check.outputs.ver }}/tarMD5.txt
-            git add .
-            git commit -am "上传时间： $(date '+%Y-%m-%d %H:%M:%S')"
-            #git push --quiet "https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
-            fi
+           mkdir -p /opt/bin/zerotier-one
+           echo -e "\n\033[42;31;5;1m 打包padavan的zerotier \n\033[0m"
+           cp /opt/zt/zerotier-one /opt/bin/zerotier-one/zerotier-one
+           ln -sf /opt/bin/zerotier-one/zerotier-one /opt/bin/zerotier-one/zerotier-cli
+           ln -sf /opt/bin/zerotier-one/zerotier-one /opt/bin/zerotier-one/zerotier-idtool
+           cd /opt/bin
+           tar czvf zerotier.tar.gz zerotier-one
+           if [[ $TARGET == mipsel ]] ; then
+              echo $(md5sum /opt/bin/zerotier.tar.gz | awk '{print $1;}') >tarMD5.txt
+              cd /opt/bin/zerotier-one
+              echo $(md5sum /opt/bin/zerotier-one/zerotier-one | awk '{print $1;}') >MD5.txt
+              git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+              git config --global user.name "github-actions[bot]"
+              cd $BASE
+              [ ! -d "install/${{ needs.check.outputs.ver }}" ] && mkdir -p "install/${{ needs.check.outputs.ver }}"
+              cp -rf /opt/bin/zerotier-one/zerotier-one install/${{ needs.check.outputs.ver }}/zerotier-one
+              cp -rf /opt/bin/zerotier-one/MD5.txt install/${{ needs.check.outputs.ver }}/MD5.txt
+              cp -rf /opt/bin/zerotier.tar.gz install/${{ needs.check.outputs.ver }}/zerotier.tar.gz
+              cp -rf /opt/bin/tarMD5.txt install/${{ needs.check.outputs.ver }}/tarMD5.txt
+              git add .
+              git commit -am "上传时间： $(date '+%Y-%m-%d %H:%M:%S')"
+              #git push --quiet "https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+           fi
             mkdir -p /opt/ipk
             wget -q -c https://github.com/lmq8267/ZeroTierOne/releases/download/1.12.1/zerotier_1.12.2-1_mipsel-3.4.ipk -P /opt/ipk/
             echo -e "\n\033[42;31;5;1m 开始打包Entware软件中心IPK安装包.. \n\033[0m"
@@ -223,14 +233,14 @@ jobs:
             tar -czf zerotier_${{ needs.check.outputs.ver }}-1_mipsel-3.4.ipk data.tar.gz control.tar.gz debian-binary
          fi
          if [[ $TARGET == mipsel-opt ]] ;then
-         mkdir -p /opt/bin/zerotier-one
-         echo -e "\n\033[42;31;5;1m 打包mipsel-opt-zerotier \n\033[0m"
-         cp /opt/zt/zerotier-one /opt/bin/zerotier-one/zerotier-one
-         ln -sf /opt/bin/zerotier-one/zerotier-one /opt/bin/zerotier-one/zerotier-cli
-         ln -sf /opt/bin/zerotier-one/zerotier-one /opt/bin/zerotier-one/zerotier-idtool
-         cd /opt/bin
-         tar czvf zerotier-mipsel-opt.tar.gz zerotier-one
-         mkdir -p /opt/ipk
+           mkdir -p /opt/bin/zerotier-one
+           echo -e "\n\033[42;31;5;1m 打包mipsel-opt-zerotier \n\033[0m"
+           cp /opt/zt/zerotier-one /opt/bin/zerotier-one/zerotier-one
+           ln -sf /opt/bin/zerotier-one/zerotier-one /opt/bin/zerotier-one/zerotier-cli
+           ln -sf /opt/bin/zerotier-one/zerotier-one /opt/bin/zerotier-one/zerotier-idtool
+           cd /opt/bin
+           tar czvf zerotier-mipsel-opt.tar.gz zerotier-one
+           mkdir -p /opt/ipk
             wget -q -c https://github.com/lmq8267/ZeroTierOne/releases/download/1.12.1/zerotier_1.12.2-1_mipsel-3.4.ipk -P /opt/ipk/
             echo -e "\n\033[42;31;5;1m 开始打包Entware软件中心IPK安装包.. \n\033[0m"
             tar xzf /opt/ipk/zerotier_1.12.2-1_mipsel-3.4.ipk -C /opt/ipk/
@@ -242,41 +252,45 @@ jobs:
             tar -czf zerotier-opt_${{ needs.check.outputs.ver }}-1_mipsel-3.4.ipk data.tar.gz control.tar.gz debian-binary
           fi 
          if [[ $TARGET == arm7l-opt ]] ;then
-         mkdir -p /opt/bin/zerotier-one
-         echo -e "\n\033[42;31;5;1m 打包arm7l-opt-zerotier \n\033[0m"
-         cp /opt/zt/zerotier-one /opt/bin/zerotier-one/zerotier-one
-         ln -sf /opt/bin/zerotier-one/zerotier-one /opt/bin/zerotier-one/zerotier-cli
-         ln -sf /opt/bin/zerotier-one/zerotier-one /opt/bin/zerotier-one/zerotier-idtool
-         cd /opt/bin
-         tar czvf zerotier-arm7l-opt.tar.gz zerotier-one
+           mkdir -p /opt/bin/zerotier-one
+           echo -e "\n\033[42;31;5;1m 打包arm7l-opt-zerotier \n\033[0m"
+           cp /opt/zt/zerotier-one /opt/bin/zerotier-one/zerotier-one
+           ln -sf /opt/bin/zerotier-one/zerotier-one /opt/bin/zerotier-one/zerotier-cli
+           ln -sf /opt/bin/zerotier-one/zerotier-one /opt/bin/zerotier-one/zerotier-idtool
+           cd /opt/bin
+           tar czvf zerotier-arm7l-opt.tar.gz zerotier-one
+
+           ls /opt/bin/zerotier-arm7l-opt.tar.gz
          fi
          if [[ $TARGET == arm7l-etc ]] ;then
-         mkdir -p /opt/bin/zerotier-one
-         echo -e "\n\033[42;31;5;1m 打包arm7l-etc-zerotier \n\033[0m"
-         cp /opt/zt/zerotier-one /opt/bin/zerotier-one/zerotier-one
-         ln -sf /opt/bin/zerotier-one/zerotier-one /opt/bin/zerotier-one/zerotier-cli
-         ln -sf /opt/bin/zerotier-one/zerotier-one /opt/bin/zerotier-one/zerotier-idtool
-         cd /opt/bin
-         tar czvf zerotier-arm7l-etc.tar.gz zerotier-one
+           mkdir -p /opt/bin/zerotier-one
+           echo -e "\n\033[42;31;5;1m 打包arm7l-etc-zerotier \n\033[0m"
+           cp /opt/zt/zerotier-one /opt/bin/zerotier-one/zerotier-one
+           ln -sf /opt/bin/zerotier-one/zerotier-one /opt/bin/zerotier-one/zerotier-cli
+           ln -sf /opt/bin/zerotier-one/zerotier-one /opt/bin/zerotier-one/zerotier-idtool
+           cd /opt/bin
+           tar czvf zerotier-arm7l-etc.tar.gz zerotier-one
          fi
          if [[ $TARGET == arm7l-swrt ]] ;then
-         mkdir -p /opt/bin/zerotier-one
-         echo -e "\n\033[42;31;5;1m 打包arm7l-swrt-zerotier \n\033[0m"
-         cp /opt/zt/zerotier-one /opt/bin/zerotier-one/zerotier-one
-         ln -sf /opt/bin/zerotier-one/zerotier-one /opt/bin/zerotier-one/zerotier-cli
-         ln -sf /opt/bin/zerotier-one/zerotier-one /opt/bin/zerotier-one/zerotier-idtool
-         cd /opt/bin
-         tar czvf zerotier-arm7l-swrt.tar.gz zerotier-one
+           mkdir -p /opt/bin/zerotier-one
+           echo -e "\n\033[42;31;5;1m 打包arm7l-swrt-zerotier \n\033[0m"
+           cp /opt/zt/zerotier-one /opt/bin/zerotier-one/zerotier-one
+           ln -sf /opt/bin/zerotier-one/zerotier-one /opt/bin/zerotier-one/zerotier-cli
+           ln -sf /opt/bin/zerotier-one/zerotier-one /opt/bin/zerotier-one/zerotier-idtool
+           cd /opt/bin
+           tar czvf zerotier-arm7l-swrt.tar.gz zerotier-one
          fi
          if [[ $TARGET == arm7l-koolshare ]] ;then
-         mkdir -p /opt/bin/zerotier-one
-         echo -e "\n\033[42;31;5;1m 打包arm7l-koolshare-zerotier \n\033[0m"
-         cp /opt/zt/zerotier-one /opt/bin/zerotier-one/zerotier-one
-         ln -sf /opt/bin/zerotier-one/zerotier-one /opt/bin/zerotier-one/zerotier-cli
-         ln -sf /opt/bin/zerotier-one/zerotier-one /opt/bin/zerotier-one/zerotier-idtool
-         cd /opt/bin
-         tar czvf zerotier-arm7l-koolshare.tar.gz zerotier-one
+           mkdir -p /opt/bin/zerotier-one
+           echo -e "\n\033[42;31;5;1m 打包arm7l-koolshare-zerotier \n\033[0m"
+           cp /opt/zt/zerotier-one /opt/bin/zerotier-one/zerotier-one
+           ln -sf /opt/bin/zerotier-one/zerotier-one /opt/bin/zerotier-one/zerotier-cli
+           ln -sf /opt/bin/zerotier-one/zerotier-one /opt/bin/zerotier-one/zerotier-idtool
+           cd /opt/bin
+           tar czvf zerotier-arm7l-koolshare.tar.gz zerotier-one
          fi
+         
+         ls -R /opt || true && ls -R . || true
       #- 
         #name: 打包梅林离线安装包
         #shell: bash
@@ -339,6 +353,7 @@ jobs:
           #files: /opt/koolshare/zerotier-${{ needs.check.outputs.ver }}.tar.gz
       - 
         name: 发布release
+        if: matrix.TARGET != 'mipsel'
         uses: softprops/action-gh-release@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -366,9 +381,6 @@ jobs:
             /opt/bin/zerotier-arm7l-etc.tar.gz
             /opt/bin/zerotier-arm7l-swrt.tar.gz
             /opt/bin/zerotier-arm7l-koolshare.tar.gz
-            /opt/ipk/zerotier-opt_${{ needs.check.outputs.ver }}-1_mipsel-3.4.ipk
-            /opt/bin/zerotier-mipsel-opt.tar.gz
-            /opt/ipk/zerotier_${{ needs.check.outputs.ver }}-1_mipsel-3.4.ipk
 
       - 
         name: 发布release
@@ -400,6 +412,9 @@ jobs:
             /opt/bin/tarMD5.txt
             /opt/bin/zerotier-one/zerotier-one
             /opt/bin/zerotier-one/MD5.txt
+            /opt/ipk/zerotier-opt_${{ needs.check.outputs.ver }}-1_mipsel-3.4.ipk
+            /opt/bin/zerotier-mipsel-opt.tar.gz
+            /opt/ipk/zerotier_${{ needs.check.outputs.ver }}-1_mipsel-3.4.ipk
             
       - name: Push changes
         uses: ad-m/github-push-action@master
